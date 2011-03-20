@@ -1,94 +1,22 @@
-<?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" 
-	xmlns:xlink="http://www.w3.org/1999/xlink" 
-	xmlns:m="http://msdl.cs.mcgill.ca/"
-	width="800" 
-	height="400" >
-
-	<style>
-		line.edge,path.edge { 
-			marker-end: url(#Triangle);
-			stroke: black; 
-			fill: none;
-		}
-
-		text {
-			fill : black;
-			stroke : none;
-			dominant-baseline : hanging;
-		}
-
-		circle {
-			fill : blue;
-			stroke : black;
-		}
-
-		rect {
-			fill : white;
-			stroke : black;
-		}
-
-		rect#dragging {
-			fill : none;
-			stroke : black;
-			stroke-dasharray : 1;
-		}
-
-		line {
-			fill : none;
-			stroke : black;
-		}
-	</style>
-	<defs>
-		<marker id="Triangle"
-			viewBox="-10 0 10 10" refX="0" refY="5" 
-			markerUnits="strokeWidth"
-			markerWidth="10" markerHeight="10"
-			orient="auto">
-			<path d="M -10 0 L 0 5 L -10 10 z" />
-		</marker>
-	</defs>
-
-	<line id="arrow" class="edge" x1="0" y1="0" x2="100" y2="100"/>
-
-	<path id="bezierArrow" class="edge" d="M 0,0 C 139,300 476,300 0,0"/>
-
-	<g m:csEntity="ClassIcon" id="ClassIcon1" m:arrowSource="true" m:arrowTarget="true">
-		<rect id="nameContainerRect" width="100" height="100" />
-		<text id="nameText" x="100" y="100" > MyClass1 </text>
-
-		<rect id="attributeListRect" />
-
-		<text id="attributeListAttr1" > -a : int </text>
-		<text id="attributeListAttr2" > -b : string </text>
-	</g>
+<svg onload="init(evt)" xmlns="http://www.w3.org/2000/svg" width="800" height="400"
+    xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 
-	<circle cx="400" cy="50" r="25" id="theCircle" />
+	<script type="application/ecmascript" xlink:href="batikCompatibility.js"></script> 
+	<script type="application/ecmascript" xlink:href="lib/jquery-1.2.6.js"></script> 
+	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
+	<script type="application/ecmascript"><![CDATA[ 
+	var svgWrapper;  
+	function init(evt) {     
+		svgWrapper = new $.svg._wrapperClass(         
+			evt.target.ownerDocument.documentElement,
+			{clientWidth: 500, clientHeight: 400});     
 
+		svgWrapper.rect(40, 45, 50, 10);     
+		svgWrapper.rect(60, 25, 10, 50); 
+	} // ]]> </script> 
 
-	<g m:csEntity="CompositeStateIcon" id="CompositeStateIcon1" m:arrowSource="true" m:arrowTarget="true">
-		<m:behaviourInterface type="drag-and-drop" bboxShape="compositeStateRect"/>
-
-		<rect id="compositeStateRect" rx="20" ry="20" />
-		<text id="compositeStateNameText" x="400" y="100" > MyCompositeState </text>
-		<line id="compositeStateLineUnderNameText" fill="none"/>
-
-		<!-- TODO: will probably want to refactor these states to be inside of the parent group -->
-		<!-- we need to have them hierarchially nested for event handling (events bubble to parent, which is correct) -->
-		<g m:csEntity="BasicStateIcon" id="BasicStateIcon1">
-			<rect  id="basicState1Rect" rx="20" ry="20" />
-			<text id="basicState1NameText" x="450" y="150"> MyBasicState1 </text>
-		</g>
-
-		<g m:csEntity="BasicStateIcon" id="BasicStateIcon2">
-			<rect id="basicState2Rect" rx="20" ry="20" />
-			<text id="basicState2NameText" x="350" y="175"> MyBasicState2 </text>
-		</g>
-	</g>
-
-
- 
+	<!--
 	<script xlink:href="2D.js"/>
 	<script xlink:href="Intersection.js"/>
 	<script xlink:href="getDomInterface.js"/>
@@ -96,6 +24,5 @@
 	<script xlink:href="2D.js"/>
 	<script xlink:href="svg.js"/>
 	<script xlink:href="c.js"/>
+	-->
 </svg>
-
-
