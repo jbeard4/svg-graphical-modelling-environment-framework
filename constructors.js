@@ -8,10 +8,10 @@ function setupConstructors(defaultStatechartInstance,cm){
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
-		ClassIcon : function(){
+		ClassIcon : function(x,y){
 			var classIconG = svg.group();
 			var nameContainerRect = svg.rect(classIconG,0,0,100,100);
-			var nameText = svg.text(classIconG,0,0,"Class");
+			var nameText = svg.text(classIconG,x,y,"Class");
 
 			//create constraint
 

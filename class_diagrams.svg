@@ -15,9 +15,6 @@
 			evt.target.ownerDocument.documentElement,
 			{clientWidth: 500, clientHeight: 400});     
 
-		svg.rect(40, 45, 50, 10);     
-		svg.rect(60, 25, 10, 50); 
-
 		var constraintGraph = [];
 		var visualObjects = [];
 
@@ -25,14 +22,18 @@
 		var constraintModule = ConstraintModule(svgModule);
 		var constructors = setupConstructors(null,constraintModule); 
 
-		var o = constructors.ClassIcon();
-		constraintGraph = constraintGraph.concat(o.constraints);
-		visualObjects = visualObjects.concat(o.constraintVisualObjects); 
+		
+		document.documentElement.addEventListener("mousedown",function(e){
+			var o = constructors.ClassIcon(e.clientX,e.clientY);
+			constraintGraph = constraintGraph.concat(o.constraints);
+			visualObjects = visualObjects.concat(o.constraintVisualObjects); 
 
-		console.log("constraintGraph",constraintGraph);
-		console.log("visualObjects",visualObjects); 
+			console.log("constraintGraph",constraintGraph);
+			console.log("visualObjects",visualObjects); 
 
-		constraintModule.resolveGraphicalConstraints(visualObjects,constraintGraph);
+			constraintModule.resolveGraphicalConstraints(visualObjects,constraintGraph);
+		},false);
+
 		
 	} // ]]> </script> 
 
