@@ -4,7 +4,16 @@ function ConstraintModule(svg){
 
 	function identity(o){return o};
 
-	function sum(a,b){return a + b};
+	//function sum(a,b){return a + b};
+
+	function sum(){
+		var toReturn = 0;
+		for(var i = 0; i < arguments.length; i++){
+			toReturn += arguments[i];
+		}
+		return toReturn;
+	};
+
 
 	//higher order function used for padding and stuff
 	function inc(i){
@@ -158,13 +167,26 @@ function ConstraintModule(svg){
 		var s = nodes.filter(noIncomingEdges);
 		var l = [];
 
+		function resetVisited(){
+			//FIXME: this is pretty ugly. we should not be setting properties directly on dom nodes, as they get retained each time this function is called
+			visualObjs.forEach(function(n){n.visited=false});
+		}
+
+		var i = 0;
 		s.forEach(function(n){
-			visit(n);
+			console.log(i++);
+			visit(n,[]);
+			//resetVisited();
 		});
 
 		console.log("s",s);
 
-		function visit(n){
+		function visit(n,nodesOnStack){
+			if(nodesOnStack.indexOf(n) !== -1){
+				throw new Error("Dependency graph has cycle.");
+			}
+			nodesOnStack = nodesOnStack.concat(n);
+
 			if(!n.visited){
 
 				n.visited=true;
@@ -175,14 +197,16 @@ function ConstraintModule(svg){
 						.reduce(function(a,b){
 							return a.indexOf(b) === -1 ? a.concat(b) : a},[]);
 
-				edgesCorrespondingToThisNode.map(function(e){return e.dest}).forEach(visit);
+				edgesCorrespondingToThisNode
+					.map(function(e){return e.dest})	
+					.forEach(function(destNode){
+						visit(destNode,nodesOnStack)});
 
 				l.push(n);
 			}
 		}
 
-		//FIXME: this is pretty ugly. we should not be setting properties directly on dom nodes, as they get retained each time this function is called
-		visualObjs.forEach(function(n){n.visited=false});
+		resetVisited();
 
 		return l;
 	}
@@ -199,8 +223,6 @@ function ConstraintModule(svg){
 				var sourceAttrs = c.source.attrs;
 
 				console.log("=== setting ", sourceAttrs, " for node ", sourceNode.getAttributeNS(null,"id"),"===");
-
-				//if(sourceNode === attributeListAttr1) debugger;
 
 				var attrValues = c.dest.map(function(destNodeAttr){
 					var destNode = destNodeAttr.node;
@@ -228,7 +250,7 @@ function ConstraintModule(svg){
 
 					var toReturn;
 					if(destAttributeValues.length > 1){
-						toReturn = destAttributeValues.reduce(destNodeAttr.expr);
+						toReturn = destNodeAttr.expr.apply(destNode,destAttributeValues);
 					}else{
 						toReturn = destNodeAttr.expr(destAttributeValues.pop());
 					}
@@ -263,7 +285,8 @@ function ConstraintModule(svg){
 			topoSortedNodes = topoSortNodes(visualObjects,constraints);
 			console.log("topoSortedNodes",topoSortedNodes);
 			performTopoSort(topoSortedNodes,constraints);
-		}
+		},
+		sum : sum
 	}
 
 }

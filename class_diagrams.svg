@@ -1,4 +1,4 @@
-<svg onload="init(evt)" xmlns="http://www.w3.org/2000/svg" width="800" height="400"
+<svg onload="init(evt)" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 
@@ -13,25 +13,24 @@
 	function init(evt) {     
 		svg = new $.svg._wrapperClass(         
 			evt.target.ownerDocument.documentElement,
-			{clientWidth: 500, clientHeight: 400});     
+			{clientWidth: "100%", clientHeight: "100%"});     
 
 		var constraintGraph = [];
 		var visualObjects = [];
 
+		function requestLayout(){
+			//goal of this function is to act as a listener, decoupling those objects that can change the scene graph (visual object or constraints), 
+			//from being repsonsible for re-applying layout
+			//right now we just pass the request straight through, but this could be more sophisticated
+			constraintModule.resolveGraphicalConstraints(visualObjects,constraintGraph);
+		}
+
 		var svgModule = SVGHelper();
 		var constraintModule = ConstraintModule(svgModule);
-		var constructors = setupConstructors(null,constraintModule); 
+		var constructors = setupConstructors(null,constraintModule,constraintGraph,visualObjects,requestLayout); 
 
-		
 		document.documentElement.addEventListener("mousedown",function(e){
-			var o = constructors.ClassIcon(e.clientX,e.clientY);
-			constraintGraph = constraintGraph.concat(o.constraints);
-			visualObjects = visualObjects.concat(o.constraintVisualObjects); 
-
-			console.log("constraintGraph",constraintGraph);
-			console.log("visualObjects",visualObjects); 
-
-			constraintModule.resolveGraphicalConstraints(visualObjects,constraintGraph);
+			constructors.ClassIcon(e.clientX,e.clientY);
 		},false);
 
 		
