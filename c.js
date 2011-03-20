@@ -234,25 +234,16 @@ function ConstraintModule(svg){
 
 		printNodes("s",s);
 
-		function resetVisited(){
-			//FIXME: this is pretty ugly. we should not be setting properties directly on dom nodes, as they get retained each time this function is called
-			nodes.forEach(function(n){n.visited=false});
-		}
-
 		s.forEach(function(n){
 			visit(n,[]);
-			resetVisited();
 		});
 
 		function visit(n,nodesOnStack){
 			if(nodesOnStack.indexOf(n) !== -1){
 				throw new Error("Dependency graph has cycle.");
-			}
-			nodesOnStack = nodesOnStack.concat(n);
+			}else{
 
-			if(!n.visited){
-
-				n.visited=true;
+				nodesOnStack = nodesOnStack.concat(n);
 
 				var edgesCorrespondingToThisNode = 
 					unique(
@@ -266,8 +257,6 @@ function ConstraintModule(svg){
 				l.push(n);
 			}
 		}
-
-		resetVisited();
 
 		printNodes("l",l);
 
