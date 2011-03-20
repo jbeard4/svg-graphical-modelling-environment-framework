@@ -49,13 +49,13 @@ function ConstraintModule(svg){
 		layoutAction = layoutAction || identity;
 
 		return {
-			source : source,
-			dest : destinationOrDestinations,
+			source : source,	//NodeAttr
+			dest : destinationOrDestinations,	//NodeAttrExpression[]
 			expr : layoutAction
 		}
 	}
 
-	function NodeAttr(node,attributeNameOrNames,expression){
+	function NodeAttrExpr(node,attributeNameOrNames,expression){
 		if(!(attributeNameOrNames instanceof Array)){
 			attributeNameOrNames  = [attributeNameOrNames];
 		}
@@ -63,9 +63,23 @@ function ConstraintModule(svg){
 		expression = expression || identity;
 
 		return {
-			node : node,
-			attrs : attributeNameOrNames,
+			nodeAttrs : attributeNameOrNames.map(function(attr){
+				return NodeAttr(node,attr)
+			}),
 			expr : expression
+		};
+	}
+
+	function NodeAttr(node,attr){
+		return {
+			node : node,
+			attr : attr,
+			toString : function(){
+				return "(" + node.id + "," + attr + ")"
+			},
+			equals : function(nodeAttr){
+				return this.node === nodeAttr.node && this.attr === nodeAttr.attr;
+			}
 		}
 	}
 
@@ -138,48 +152,97 @@ function ConstraintModule(svg){
 		}
 	}
 
-	function topoSortNodes(visualObjs,constraints){
-		var nodes = visualObjs.slice();
-
-		console.log("nodes to sort: ",nodes);
-
-		//reverse the edges
-		var edges = constraints.map(function(c){
-			return c.dest.map(function(d){
-				return {
-					source : c.source.node,
-					dest : d.node
-				}
-			})
-		}).reduce(function(a,b){return a.concat(b)},[]);
+	function topoSortNodes(constraints){
 
 		function noIncomingEdges(n){
-			return !edges.some(function(e){
-				return e.dest === n;
+
+			var toReturn= !edges.some(function(e){
+				return e.dest.equals(n);
 			});
+
+			console.log(n.toString(),toReturn);
+
+			return toReturn;
 		}
 
 		function unique(arr){
 			return arr.reduce(function(a,b){
-					return a.indexOf(b) === -1 ? a.concat(b) : a},[]);
+					return a.filter(function(nodeAttr){return nodeAttr.equals(b)}).length ? a : a.concat(b)},[]);
+
+			/*
+			return arr.filter(function(nodeAttr){
+				return arr.filter(function(nodeAttr2){
+					return nodeAttr.equals(nodeAttr2);	
+				}).length > 1;
+			})
+			*/
 		}
+
+		function flatten(a,b){
+			return a.concat(b);
+		}
+
+
+		var nodes = constraints.map(function(c){
+			return [c.source].concat(
+					c.dest.map(function(d){
+						return d.nodeAttrs
+					}).reduce(flatten,[]))
+		}).reduce(flatten,[]);
+
+		nodes = unique(nodes);
+
+		printNodes("nodes",nodes);
+
+		//console.log("nodes to sort: ",;
+
+		//get a flattened array of NodeAttr -> NodeAttr edges
+		//source:nodeAttr
+		//dest:nodeAttrExpr[]
+			//get nodeAttr[] from each
+			//flatten them
+		//dest.nodeAttrs	//get all of the nodeAttrs
+			//.nodeAttr	
+			//.node
+		var edges = constraints.map(function(c){
+			return c.dest.
+				map(function(nae){return nae.nodeAttrs})	//so then we have NodeAttr[][]
+				.reduce(flatten,[])	//then we have NodeAttr[]
+				.map(function(d){
+					return {
+						source : c.source,
+						dest : d,
+						equals : function(node){
+							return this === node;
+						}
+					}
+				})
+		}).reduce(flatten,[]);
+
+		function printEdges(nodeList){
+			console.log("edges : ", nodeList.map(function(n){return "{" + n.source.toString() + "," + n.dest.toString() + "}"}).join(","))
+		}
+	
+		printEdges(edges);
 
 		var s = nodes.filter(noIncomingEdges);
 		var l = [];
 
-		function resetVisited(){
-			//FIXME: this is pretty ugly. we should not be setting properties directly on dom nodes, as they get retained each time this function is called
-			visualObjs.forEach(function(n){n.visited=false});
+		function printNodes(title,nodeList){
+			console.log(title + " : ", nodeList.map(function(n){return n.toString()}).join(","))
 		}
 
-		var i = 0;
-		s.forEach(function(n){
-			console.log(i++);
-			visit(n,[]);
-			//resetVisited();
-		});
+		printNodes("s",s);
 
-		console.log("s",s);
+		function resetVisited(){
+			//FIXME: this is pretty ugly. we should not be setting properties directly on dom nodes, as they get retained each time this function is called
+			nodes.forEach(function(n){n.visited=false});
+		}
+
+		s.forEach(function(n){
+			visit(n,[]);
+			resetVisited();
+		});
 
 		function visit(n,nodesOnStack){
 			if(nodesOnStack.indexOf(n) !== -1){
@@ -192,10 +255,8 @@ function ConstraintModule(svg){
 				n.visited=true;
 
 				var edgesCorrespondingToThisNode = 
-					edges
-						.filter(function(e){return e.source === n})
-						.reduce(function(a,b){
-							return a.indexOf(b) === -1 ? a.concat(b) : a},[]);
+					unique(
+						edges.filter(function(e){return e.source.equals(n)}));
 
 				edgesCorrespondingToThisNode
 					.map(function(e){return e.dest})	
@@ -208,30 +269,43 @@ function ConstraintModule(svg){
 
 		resetVisited();
 
+		printNodes("l",l);
+
 		return l;
 	}
 
+	/**
+		for each topo-sorted node
+		get the value of his dependencies (or the defaul value set on the node, if he has no dependencies)
+		transform the value as needed
+		set the new value on the node	(which I think gets encoded in DOM... as opposed to keeping some kind of nodeattr-to-value map or something...)
+	*/
 	function performTopoSort(topoSortedNodes,constraints){
 		topoSortedNodes.forEach(function(n){
+			console.log("foo",n.toString());
+
 			var constraintsAssociatedWithNode = 
 				constraints.filter(function(c){
-					return c.source.node === n;
+					return c.source.equals(n);
 				});
 
 			constraintsAssociatedWithNode.forEach(function(c){
 				var sourceNode = c.source.node;
-				var sourceAttrs = c.source.attrs;
+				var sourceAttr = c.source.attr;
 
-				console.log("=== setting ", sourceAttrs, " for node ", sourceNode.getAttributeNS(null,"id"),"===");
+				console.log("=== setting ", sourceAttr, " for node ", sourceNode.id,"===");
 
-				var attrValues = c.dest.map(function(destNodeAttr){
-					var destNode = destNodeAttr.node;
-					var destAttrs = destNodeAttr.attrs;
+				var attrValues = c.dest.map(function(destNodeAttrExpr){
+					var destNodeAttrs = destNodeAttrExpr.nodeAttrs;
 
-					var bbox = svg.getBBoxInElementSpace(destNode,sourceNode);
 
 					var destAttributeValues = 
-						destAttrs.map(function(destAttr){
+						destNodeAttrs.map(function(destNodeAttr){
+							var destNode = destNodeAttr.node;
+							var destAttr = destNodeAttr.attr;
+
+							var bbox = svg.getBBoxInElementSpace(destNode,sourceNode);
+	
 							switch(destAttr){
 								case "x":
 									return bbox.x;
@@ -250,29 +324,19 @@ function ConstraintModule(svg){
 
 					var toReturn;
 					if(destAttributeValues.length > 1){
-						toReturn = destNodeAttr.expr.apply(destNode,destAttributeValues);
+						toReturn = destNodeAttrExpr.expr.apply(this,destAttributeValues); //TODO: parameterize the "this" object
 					}else{
-						toReturn = destNodeAttr.expr(destAttributeValues.pop());
+						toReturn = destNodeAttrExpr.expr(destAttributeValues.pop());
 					}
 
-					console.log("computed ", toReturn," for node ", destNode.getAttributeNS(null,"id"), " and attrs ", destAttrs);
+					//console.log("computed ", toReturn," for node ", destNode.getAttributeNS(null,"id"), " and attrs ", destNodeAttrs);
 
 					return toReturn;
 				});
 
 				var constraintValue = c.expr.apply(sourceNode,attrValues);
-
 				
-				if(sourceAttrs.length > 1){
-					for(var i=0;i<sourceAttrs.length;i++){
-						var sourceAttr = sourceAttrs[i];
-						var cv = constraintValue[i];
-						
-						setAttr(sourceNode,sourceAttr,cv);
-					}
-				}else{
-					setAttr(sourceNode,sourceAttrs[0],constraintValue);
-				} 
+				setAttr(sourceNode,sourceAttr,constraintValue);
 			});
 		});
 	}
@@ -280,9 +344,10 @@ function ConstraintModule(svg){
 
 	return {
 		Constraint : Constraint,
+		NodeAttrExpr : NodeAttrExpr,
 		NodeAttr : NodeAttr,
 		resolveGraphicalConstraints : function(visualObjects,constraints){
-			topoSortedNodes = topoSortNodes(visualObjects,constraints);
+			topoSortedNodes = topoSortNodes(constraints);
 			console.log("topoSortedNodes",topoSortedNodes);
 			performTopoSort(topoSortedNodes,constraints);
 		},

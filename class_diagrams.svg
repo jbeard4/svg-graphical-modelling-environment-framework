@@ -8,33 +8,7 @@
 	<script type="application/ecmascript" xlink:href="batikCompatibility.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/jquery-1.2.6.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
-	<script type="application/ecmascript"><![CDATA[ 
-	var svgWrapper;  
-	function init(evt) {     
-		svg = new $.svg._wrapperClass(         
-			evt.target.ownerDocument.documentElement,
-			{clientWidth: "100%", clientHeight: "100%"});     
-
-		var constraintGraph = [];
-		var visualObjects = [];
-
-		function requestLayout(){
-			//goal of this function is to act as a listener, decoupling those objects that can change the scene graph (visual object or constraints), 
-			//from being repsonsible for re-applying layout
-			//right now we just pass the request straight through, but this could be more sophisticated
-			constraintModule.resolveGraphicalConstraints(visualObjects,constraintGraph);
-		}
-
-		var svgModule = SVGHelper();
-		var constraintModule = ConstraintModule(svgModule);
-		var constructors = setupConstructors(null,constraintModule,constraintGraph,visualObjects,requestLayout); 
-
-		document.documentElement.addEventListener("mousedown",function(e){
-			constructors.ClassIcon(e.clientX,e.clientY);
-		},false);
-
-		
-	} // ]]> </script> 
+	<script type="application/ecmascript" xlink:href="init.js"/>
 
 	<!--
 	<script xlink:href="2D.js"/>

@@ -13,60 +13,61 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,visualOb
 			var nameContainerRect = svg.rect(classIconG);
 			var nameText = svg.text(classIconG,x,y,"Class");
 
-			nameContainerRect.setAttributeNS(null,"id","nameContainerRect");
-			nameText.setAttributeNS(null,"id","nameText");
+			nameContainerRect.id = "nameContainerRect";
+			nameText.id = "nameText";
 
 			var attributeListRect = svg.rect(classIconG,0,0,100,10);	//set an initial height
-			attributeListRect.setAttributeNS(null,"id","attributeListRect");
+			attributeListRect.id = "attributeListRect";
 
 			var NEW_ATTRIBUTE_BUTTON_RADIUS = 5; 
 
 			var newAttributeButton = svg.circle(classIconG,0,0,NEW_ATTRIBUTE_BUTTON_RADIUS);
+			newAttributeButton.id = "newAttributeButton";
 
 			//create constraint
 			constraintGraph.push(
 				//nameContainerRect
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"width"),
-					[cm.NodeAttr(nameText,"width"),cm.NodeAttr(attributeListRect,"width")],
+					[cm.NodeAttrExpr(nameText,"width"),cm.NodeAttrExpr(attributeListRect,"width")],
 					Math.max
 				),
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"x"),
-					cm.NodeAttr(nameText,"x")
+					cm.NodeAttrExpr(nameText,"x")
 				),
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"y"),
-					cm.NodeAttr(nameText,"y")
+					cm.NodeAttrExpr(nameText,"y")
 				),
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"height"),
-					cm.NodeAttr(nameText,"height")
+					cm.NodeAttrExpr(nameText,"height")
 				),
 
 				//attributeListRect
 				cm.Constraint(
 					cm.NodeAttr(attributeListRect,"width"),
-					cm.NodeAttr(nameText,"width"),
+					cm.NodeAttrExpr(nameText,"width"),
 					Math.max
 				),
 				cm.Constraint(
 					cm.NodeAttr(attributeListRect,"y"),
-					cm.NodeAttr(nameText,["y","height"],cm.sum)
+					cm.NodeAttrExpr(nameText,["y","height"],cm.sum)
 				),
 				cm.Constraint(
 					cm.NodeAttr(attributeListRect,"x"),
-					cm.NodeAttr(nameText,"x")
+					cm.NodeAttrExpr(nameText,"x")
 				),
 
 				//newAttributeButton 
 				cm.Constraint(
 					cm.NodeAttr(newAttributeButton,"cx"),
-					cm.NodeAttr(attributeListRect,["x","width"],cm.sum)
+					cm.NodeAttrExpr(attributeListRect,["x","width"],cm.sum)
 				),
 				cm.Constraint(
 					cm.NodeAttr(newAttributeButton,"cy"),
-					cm.NodeAttr(attributeListRect,["y","height"],cm.sum)
+					cm.NodeAttrExpr(attributeListRect,["y","height"],cm.sum)
 				)
 			);
 
@@ -112,7 +113,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,visualOb
 				//create a new attribute and add him to the constraint list
 				//FIXME: really we would prompt the user here... in fact maybe I should just prompt... or pop up a dialog. or just let the user type, then focus the text, etc.
 				var newAttribute = svg.text(classIconG,x,y,"+attributeName : attributeType");	
-				newAttribute.setAttributeNS(null,"id","newAttribute" + attributes.length);
+				newAttribute.id = "newAttribute" + attributes.length;
 
 
 				//modify the existing constraint graph:
@@ -132,7 +133,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,visualOb
 					return constraint.source.attrs.indexOf("height") !== -1; 
 				}).pop();
 
-				sourceNodeWidthConstraint.dest.push(cm.NodeAttr(newAttribute,"width"));
+				sourceNodeWidthConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"width"));
 
 				//debugger;
 
@@ -141,14 +142,14 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,visualOb
 					constraintGraph.push(
 						cm.Constraint(
 							cm.NodeAttr(attributeListRect,"height"),
-							cm.NodeAttr(newAttribute,"height"),
+							cm.NodeAttrExpr(newAttribute,"height"),
 							cm.sum
 						)
 					)
 				}else{
 				
 					//modify existing constraint
-					sourceNodeHeightConstraint.dest.push(cm.NodeAttr(newAttribute,"height"));
+					sourceNodeHeightConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"height"));
 				}
 				
 
@@ -161,11 +162,11 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,visualOb
 				constraintGraph.push(
 					cm.Constraint(
 						cm.NodeAttr(newAttribute,"y"),
-						cm.NodeAttr(targetNode,["y","height"],cm.sum)
+						cm.NodeAttrExpr(targetNode,["y","height"],cm.sum)
 					),
 					cm.Constraint(
 						cm.NodeAttr(newAttribute,"x"),
-						cm.NodeAttr(targetNode,"x")
+						cm.NodeAttrExpr(targetNode,"x")
 					)
 				);
 
@@ -178,6 +179,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,visualOb
 			},false);
 
 			visualObjects.push(nameContainerRect,nameText,attributeListRect,newAttributeButton);
+			//visualObjects.push(nameContainerRect,nameText,attributeListRect);
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 		},
