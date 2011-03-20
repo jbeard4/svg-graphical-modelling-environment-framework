@@ -2,18 +2,38 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 
+	<script type="application/ecmascript" xlink:href="lib/svg.js"></script> 
+	<script type="application/ecmascript" xlink:href="c.js"></script> 
+	<script type="application/ecmascript" xlink:href="constructors.js"></script> 
 	<script type="application/ecmascript" xlink:href="batikCompatibility.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/jquery-1.2.6.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
 	<script type="application/ecmascript"><![CDATA[ 
 	var svgWrapper;  
 	function init(evt) {     
-		svgWrapper = new $.svg._wrapperClass(         
+		svg = new $.svg._wrapperClass(         
 			evt.target.ownerDocument.documentElement,
 			{clientWidth: 500, clientHeight: 400});     
 
-		svgWrapper.rect(40, 45, 50, 10);     
-		svgWrapper.rect(60, 25, 10, 50); 
+		svg.rect(40, 45, 50, 10);     
+		svg.rect(60, 25, 10, 50); 
+
+		var constraintGraph = [];
+		var visualObjects = [];
+
+		var svgModule = SVGHelper();
+		var constraintModule = ConstraintModule(svgModule);
+		var constructors = setupConstructors(null,constraintModule); 
+
+		var o = constructors.ClassIcon();
+		constraintGraph = constraintGraph.concat(o.constraints);
+		visualObjects = visualObjects.concat(o.constraintVisualObjects); 
+
+		console.log("constraintGraph",constraintGraph);
+		console.log("visualObjects",visualObjects); 
+
+		constraintModule.resolveGraphicalConstraints(visualObjects,constraintGraph);
+		
 	} // ]]> </script> 
 
 	<!--
@@ -25,4 +45,47 @@
 	<script xlink:href="svg.js"/>
 	<script xlink:href="c.js"/>
 	-->
+	<style>
+		line.edge,path.edge { 
+			marker-end: url(#Triangle);
+			stroke: black; 
+			fill: none;
+		}
+
+		text {
+			fill : black;
+			stroke : none;
+			dominant-baseline : hanging;
+		}
+
+		circle {
+			fill : blue;
+			stroke : black;
+		}
+
+		rect {
+			fill : white;
+			stroke : black;
+		}
+
+		rect#dragging {
+			fill : none;
+			stroke : black;
+			stroke-dasharray : 1;
+		}
+
+		line {
+			fill : none;
+			stroke : black;
+		}
+	</style>
+	<defs>
+		<marker id="Triangle"
+			viewBox="-10 0 10 10" refX="0" refY="5" 
+			markerUnits="strokeWidth"
+			markerWidth="10" markerHeight="10"
+			orient="auto">
+			<path d="M -10 0 L 0 5 L -10 10 z" />
+		</marker>
+	</defs>
 </svg>
