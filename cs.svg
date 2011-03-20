@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" 
+	xmlns:xlink="http://www.w3.org/1999/xlink" 
+	xmlns:m="http://msdl.cs.mcgill.ca/">
+
+	<g m:csEntity="ClassIcon" id="ClassIcon1" m:arrowSource="true" m:arrowTarget="true">
+		<rect id="nameContainerRect" width="100" height="100" />
+		<text id="nameText" x="100" y="100" > MyClass1 </text>
+
+		<rect id="attributeListRect" />
+
+		<text id="attributeListAttr1" > -a : int </text>
+		<text id="attributeListAttr2" > -b : string </text>
+	</g>
+
+
+	<circle cx="400" cy="50" r="25" id="theCircle" />
+
+
+	<g m:csEntity="CompositeStateIcon" id="CompositeStateIcon1" m:arrowSource="true" m:arrowTarget="true">
+		<m:behaviourInterface type="drag-and-drop" bboxShape="compositeStateRect"/>
+
+		<rect id="compositeStateRect" rx="20" ry="20" />
+		<text id="compositeStateNameText" x="400" y="100" > MyCompositeState </text>
+		<line id="compositeStateLineUnderNameText" fill="none"/>
+
+		<!-- TODO: will probably want to refactor these states to be inside of the parent group -->
+		<!-- we need to have them hierarchially nested for event handling (events bubble to parent, which is correct) -->
+		<g m:csEntity="BasicStateIcon" id="BasicStateIcon1">
+			<rect  id="basicState1Rect" rx="20" ry="20" />
+			<text id="basicState1NameText" x="450" y="150"> MyBasicState1 </text>
+		</g>
+
+		<g m:csEntity="BasicStateIcon" id="BasicStateIcon2">
+			<rect id="basicState2Rect" rx="20" ry="20" />
+			<text id="basicState2NameText" x="350" y="175"> MyBasicState2 </text>
+		</g>
+	</g>
+
+</svg>
+
