@@ -115,14 +115,14 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					icon.classContainerRectXConstraint =
 						cm.Constraint(
 							cm.NodeAttr(this,"x"),
-							cm.NodeAttrExpr(shape,"x",cm.dec(spacing.leftPadding)),
+							[cm.NodeAttrExpr(this,"x"),cm.NodeAttrExpr(shape,"x",cm.dec(spacing.leftPadding))],
 							Math.min
 						);
 
 					icon.classContainerRectYConstraint =
 						cm.Constraint(
 							cm.NodeAttr(this,"y"),
-							cm.NodeAttrExpr(shape,"y",cm.dec(spacing.topPadding)),
+							[cm.NodeAttrExpr(this,"y"),cm.NodeAttrExpr(shape,"y",cm.dec(spacing.topPadding))],
 							Math.min
 						);
 
@@ -178,7 +178,6 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				}
 			}
 
-			requestLayout();
 		}
 
 		classContainerRect.hasHierarchicalChild = function(shape){

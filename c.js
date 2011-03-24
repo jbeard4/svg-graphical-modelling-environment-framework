@@ -188,10 +188,14 @@ function ConstraintModule(svg){
 		var nodes = constraints.map(function(c){
 			return [c.source].concat(
 					c.dest.map(function(d){
+						if(d.nodeAttrs.indexOf(undefined) !== -1){
+							debugger;
+						}
 						return d.nodeAttrs
 					}).reduce(flatten,[]))
-		}).reduce(flatten,[]);
+		}).reduce(flatten,[])
 
+		//eliminate duplicate nodes
 		nodes = unique(nodes);
 
 		printNodes("nodes",nodes);
@@ -220,6 +224,11 @@ function ConstraintModule(svg){
 					}
 				})
 		}).reduce(flatten,[]);
+
+		edges = edges.filter(function(edge){
+				//if(edge.source.node === edge.dest.node){ debugger;}
+				return edge.source.node !== edge.dest.node;
+			});
 
 		function printEdges(nodeList){
 			if(log) console.log("edges : ", nodeList.map(function(n){return "{" + n.source.toString() + "," + n.dest.toString() + "}"}).join(","))
