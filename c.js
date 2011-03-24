@@ -1,5 +1,7 @@
 function ConstraintModule(svg){
 
+	var log = false; 	//TODO: set this in some global prefs.js
+
 	var LABEL_PADDING = 10;
 
 	function identity(o){return o};
@@ -131,7 +133,7 @@ function ConstraintModule(svg){
 
 	function setAttr(sourceNode,sourceAttr,value){
 		
-		console.log("setting ",sourceNode.id,sourceAttr,value);
+		if(log) console.log("setting ",sourceNode.id,sourceAttr,value);
 
 		switch(sourceAttr){
 			case "$endX":
@@ -160,7 +162,7 @@ function ConstraintModule(svg){
 				return e.dest.equals(n);
 			});
 
-			console.log(n.toString(),toReturn);
+			if(log) console.log(n.toString(),toReturn);
 
 			return toReturn;
 		}
@@ -220,7 +222,7 @@ function ConstraintModule(svg){
 		}).reduce(flatten,[]);
 
 		function printEdges(nodeList){
-			console.log("edges : ", nodeList.map(function(n){return "{" + n.source.toString() + "," + n.dest.toString() + "}"}).join(","))
+			if(log) console.log("edges : ", nodeList.map(function(n){return "{" + n.source.toString() + "," + n.dest.toString() + "}"}).join(","))
 		}
 	
 		printEdges(edges);
@@ -229,7 +231,7 @@ function ConstraintModule(svg){
 		var l = [];
 
 		function printNodes(title,nodeList){
-			console.log(title + " : ", nodeList.map(function(n){return n.toString()}).join(","))
+			if(log) console.log(title + " : ", nodeList.map(function(n){return n.toString()}).join(","))
 		}
 
 		printNodes("s",s);
@@ -283,7 +285,7 @@ function ConstraintModule(svg){
 				var sourceNode = c.source.node;
 				var sourceAttr = c.source.attr;
 
-				console.log("=== setting ", sourceAttr, " for node ", sourceNode.id,"===");
+				if(log) console.log("=== setting ", sourceAttr, " for node ", sourceNode.id,"===");
 
 				var attrValues = c.dest.map(function(destNodeAttrExpr){
 					var destNodeAttrs = destNodeAttrExpr.nodeAttrs;
@@ -319,7 +321,7 @@ function ConstraintModule(svg){
 						toReturn = destNodeAttrExpr.expr(destAttributeValues.pop());
 					}
 
-					console.log("computed ", toReturn," for nodeAttrs ", destNodeAttrs.toString());
+					if(log) console.log("computed ", toReturn," for nodeAttrs ", destNodeAttrs.toString());
 
 					return toReturn;
 				});
@@ -338,10 +340,12 @@ function ConstraintModule(svg){
 		NodeAttr : NodeAttr,
 		resolveGraphicalConstraints : function(constraints){
 			topoSortedNodes = topoSortNodes(constraints);
-			console.log("topoSortedNodes",topoSortedNodes);
+			if(log) console.log("topoSortedNodes",topoSortedNodes);
 			performTopoSort(topoSortedNodes,constraints);
 		},
-		sum : sum
+		sum : sum,
+		inc : inc,
+		dec : dec
 	}
 
 }
