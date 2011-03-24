@@ -311,13 +311,12 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 				//modify the shape's ctm to match the parent's
 				//TODO: move this out into SVG helper lib?
-				var m2 = this.getCTM().inverse();
+				var m2 = shape.getTransformToElement(this);
 
 				var tl = shape.transform.baseVal;
 				var t = tl.numberOfItems ? tl.getItem(0) : shape.ownerSVGElement.createSVGTransform();
 				var m = t.matrix;
-				var newM = m.multiply(m2);
-				t.setMatrix(newM);
+				t.setMatrix(m2);
 				tl.initialize(t);
 
 				//remove him from previous drop target, if it exists
