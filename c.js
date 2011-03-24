@@ -328,7 +328,10 @@ function ConstraintModule(svg){
 
 				var constraintValue = c.expr.apply(sourceNode,attrValues);
 				
-				setAttr(sourceNode,sourceAttr,constraintValue);
+				//constraintValue might return undefined, in which case we don't set it
+				if(constraintValue !== undefined){
+					setAttr(sourceNode,sourceAttr,constraintValue);
+				}
 			});
 		});
 	}

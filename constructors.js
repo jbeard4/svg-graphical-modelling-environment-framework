@@ -4,7 +4,7 @@
 **/
 
 
-function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer){
+function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer){
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
@@ -475,7 +475,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 							var point = inter.points.pop();
 
-							return point[xOrY];
+							return point && point[xOrY];	//if there's no intersection, we might get back undefined
 						}
 					}
 
