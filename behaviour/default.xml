@@ -31,18 +31,60 @@
 	</state>
 
 	<state id="idle">
-		<transition event="mousedown" target="dragging"
-			cond="_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
-			<assign location="draggingEntity" expr="_event.data.currentTarget"/>
-		</transition>
-
-		<transition event="mousedown" target="after_ctrl_mousedown" 	
+		<transition event="mousedown" target="after_ctrl_mousedown_on_creator" 	
 			cond="_event.data.domEvent.ctrlKey &amp;&amp; 
 				_event.data.currentTarget.behaviours[modules.behaviours.CREATOR]">
 		</transition>
+
+		<!-- you can see here that there is an implicit understanding of priorities based on document order -->
+		<transition event="mousedown" target="drawing_curve" 	
+			cond="_event.data.domEvent.ctrlKey &amp;&amp; 
+				_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
+		</transition>
+
+		<transition event="mousedown" target="dragging"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
+		</transition>
+
 	</state>
 
-	<state id="after_ctrl_mousedown">
+	<state id="drawing_curve">
+		<datamodel>
+			<data id="curveBeingDrawn"/>
+		</datamodel>
+
+		<onentry>
+			<script>
+				//create a new curve on the currentTarget
+				curveBeingDrawn = modules.constructors.CurveIcon(_event.data.currentTarget);
+			</script>
+		</onentry>
+	
+		<transition event="esc">
+			<!-- TODO: accept keyboard events -->
+			<!-- TODO: implement rollback here: delete the arrow, delete the constraint -->
+		</transition>
+
+		<!-- TODO: probably want to break this down to mousedown/mouseup/etc -->
+		<transition event="mousedown" target="idle"
+			cond="_event.data.currentTarget.behaviours[_event.data.currentTarget.behaviours.ARROW_TARGET]">
+		
+			<script>
+				//set the arrow target
+				curveBeingDrawn.setTarget(_event.data.currentTarget);
+			</script>
+			
+		</transition>
+
+		<transition event="mousemove">
+			<script>
+				//update the arrow head
+				curveBeingDrawn.setEndPoint(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+			</script>
+		</transition>
+	</state>
+
+	<state id="after_ctrl_mousedown_on_creator">
 		<transition target="idle" event="mouseup">
 			<script>
 				//this will be changed to create whatever the radio buttons point to
@@ -58,6 +100,7 @@
 		</datamodel>
 
 		<onentry>
+			<assign location="draggingEntity" expr="_event.data.currentTarget"/>
 			<assign location="firstEvent" expr="_event.data.domEvent"/>
 			<assign location="eventStamp" expr="_event.data.domEvent"/>
 			<script>
@@ -87,8 +130,7 @@
 		</onexit>
 
 
-		<transition event="mouseup" target="idle">
-		</transition>
+		<transition event="mouseup" target="idle"/>
 
 		<!-- no target: this is a static reaction (targetless transition in SCXML parlance) -->
 		<transition event="mousemove">

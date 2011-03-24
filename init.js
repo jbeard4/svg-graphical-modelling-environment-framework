@@ -17,11 +17,6 @@ function init(evt) {
 	var svgModule = SVGHelper();
 	var constraintModule = ConstraintModule(svgModule);
 
-	var behaviours = {
-		DRAGGABLE : "DRAGGABLE",
-		CREATOR : "CREATOR"
-	}
-
 	//hook up behaviour
 	compiledStatechartInstance = new StatechartExecutionContext(); 
 
@@ -36,7 +31,8 @@ function init(evt) {
 			svgHelper:svgModule,
 			svg:svg,
 			behaviours:behaviours,
-			constructors:constructors
+			constructors:constructors,
+			constraintGraph:constraintGraph,
 		}});
 
 	svgRoot.behaviours = {
@@ -55,5 +51,9 @@ function init(evt) {
 	});
 
 
-	constructors.ClassIcon(100,100);
+	var g1 = constructors.ClassIcon(100,100);
+	var g2 = constructors.ClassIcon(200,200);
+	var c = constructors.CurveIcon(g1);
+	c.setEndPoint(300,300); 
+	c.setTarget(g2); 
 }

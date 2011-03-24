@@ -196,7 +196,9 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//FIXME: do we or do we not allow event propagation????
 
 			classIconG.behaviours = {
-				DRAGGABLE : true
+				DRAGGABLE : true,
+				ARROW_SOURCE : true,
+				ARROW_TARGET : true
 			};
 		
 			//add drag behaviour
@@ -212,11 +214,130 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			});
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
+
+			return classIconG;
 		},
 
 		PackageIcon : function(){
 			
 			
+		},
+
+		CurveIcon : function(source,x,y){
+			x = x || 0;
+			y = y || 0;
+
+			//TODO: make the irst icon expose a nice API like this...
+			//TODO: maybe use API to encode behaviour tags?
+
+			//create the group and the path
+			//also the source... with the second drop?
+			//return the group
+			var line = svg.line(x,y,x+1,y+1);
+			line.setAttributeNS(null,"class","edge");	//TODO: jquery-ify this statement
+
+			var targetConstraintX,
+				targetConstraintY,
+				sourceConstraintX = 
+					cm.Constraint(
+						cm.NodeAttr(line,"$startX"),
+						cm.NodeAttrExpr(source,"bbox"),
+						function(sourceBBox){
+							return sourceBBox.x + sourceBBox.width/2;
+						}
+
+					),
+				sourceConstraintY = 
+					cm.Constraint(
+						cm.NodeAttr(line,"$startY"),
+						cm.NodeAttrExpr(source,"bbox"),
+						function(sourceBBox){
+							return sourceBBox.y + sourceBBox.height/2;
+						}
+
+					);
+
+			constraintGraph.push(sourceConstraintX,sourceConstraintY);
+
+			requestLayout();
+
+			return {
+				setEndPoint : function(x,y){
+					line.x2.baseVal.value = x;	 
+					line.y2.baseVal.value = y;
+				},
+				setTarget : function(target){
+					//set up the constraint graph for the target
+					function getConstraintFunction(xOrY){
+						return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
+							var x0 = fromX + fromWidth/2;
+							var y0 = fromY + fromHeight/2;
+
+							var x1 = toX + toWidth/2;
+							var y1 = toY + toHeight/2;
+
+
+							var p1 = new Point2D(x0,y0),
+								p2 = new Point2D(x1,y1),
+								r1 = new Point2D(toX,toY),
+								r2 = new Point2D(toX + toWidth, toY + toHeight);
+
+							var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
+
+							var point = inter.points.pop();
+
+							return point[xOrY];
+						}
+					}
+
+					var depList = [cm.NodeAttrExpr(source,"x"),
+								cm.NodeAttrExpr(source,"y"),
+								cm.NodeAttrExpr(source,"width"),
+								cm.NodeAttrExpr(source,"height"),
+								cm.NodeAttrExpr(target,"x"),
+								cm.NodeAttrExpr(target,"y"),
+								cm.NodeAttrExpr(target,"width"),
+								cm.NodeAttrExpr(target,"height")];
+					
+					targetConstraintX = 
+						cm.Constraint(
+							cm.NodeAttr(line,"$endX"),
+							depList, 
+							getConstraintFunction("x")
+						);
+
+					targetConstraintY = 
+						cm.Constraint(
+							cm.NodeAttr(line,"$endY"),
+							depList, 
+							getConstraintFunction("y")
+						);
+
+					constraintGraph.push(targetConstraintX,targetConstraintY);
+
+					requestLayout();
+				},
+				rollback : function(){		//here aliased to remove, but in polyline or path, may not be
+					this.remove();
+				},	
+				getNumberOfControlPoints : function(){
+					return 0;
+				},
+				remove : function(){
+					//remove self from dom
+					line.parentNode.removeChild(line);
+					
+					//remove constraints
+					[sourceConstraintX,sourceConstraintY,targetConstraintX,targetConstraintY].forEach(function(c){
+						constraintGraph.splice(constraintGraph.indexOf(c),1);
+						constraintGraph.splice(constraintGraph.indexOf(c),1);
+						constraintGraph.splice(constraintGraph.indexOf(c),1);	//FIXME: make sure targetConstraint is set?
+						constraintGraph.splice(constraintGraph.indexOf(c),1);	//FIXME: make sure targetConstraint is set?
+					})
+
+					requestLayout();
+				}
+			}
 		}
 	}
 

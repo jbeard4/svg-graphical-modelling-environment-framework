@@ -2,6 +2,9 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 
+	<script type="application/ecmascript" xlink:href="lib/intersection/Intersection.js"></script> 
+	<script type="application/ecmascript" xlink:href="lib/intersection/2D.js"></script> 
+	<script type="application/ecmascript" xlink:href="behaviours.js"></script> 
 	<script type="application/ecmascript" xlink:href="build/default.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/svg.js"></script> 
 	<script type="application/ecmascript" xlink:href="c.js"></script> 
