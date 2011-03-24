@@ -206,12 +206,18 @@
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.DROP_TARGET]">
 			</transition>
 
-			<transition event="mouseup" target="idle">
+			<transition event="mouseup" target="dummy_state_before_idle">
 				<script>
 					//set up constraint relationship
 					dropTarget.dropShape(draggingEntity);
 				</script>
 			</transition>
+
+		</state>
+
+		<!-- this state is to prevent the exit action from firing before the transition action -->
+		<state id="dummy_state_before_idle">
+			<transition target="idle"/>
 		</state>
 	</state>
 
