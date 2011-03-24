@@ -272,6 +272,26 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			classContainerRect.behaviours = {
 				DROP_SOURCE : true
 			};
+
+			//here we hook up appropriate events to elements with default behaviour
+			//what are appropriate events? we are defining these as we go...
+
+			["mousedown","mouseup","mousemove","mouseover","mouseout"].forEach(function(eventName){
+				icon.addEventListener(eventName,function(e){
+					e.preventDefault();
+					e.stopPropagation();
+					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:icon})
+				},false);
+			});
+
+			["mouseover","mouseout"].forEach(function(eventName){
+				classContainerRect.addEventListener(eventName,function(e){
+					e.preventDefault();
+					//FIXME: this is interesting. in order to not conflict with drag-and-drop behaviour (parent has arrow target), we need to not stop event propagation. when generating the environment, we will need to determine the strict conditions that require us to stop event propagation, or not
+					//e.stopPropagation();	
+					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classContainerRect})
+				},false);
+			});
 		
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 
