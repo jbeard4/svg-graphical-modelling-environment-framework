@@ -338,14 +338,14 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					classContainerRectXConstraint =
 						cm.Constraint(
 							cm.NodeAttr(classContainerRect,"x"),
-							cm.NodeAttrExpr(shape,"x"),
+							cm.NodeAttrExpr(shape,"x",cm.dec(PACKAGE_LEFT_PADDING)),
 							Math.min
 						);
 
 					classContainerRectYConstraint =
 						cm.Constraint(
 							cm.NodeAttr(classContainerRect,"y"),
-							cm.NodeAttrExpr(shape,"y"),
+							cm.NodeAttrExpr(shape,"y",cm.dec(PACKAGE_TOP_PADDING)),
 							Math.min
 						);
 
@@ -361,8 +361,8 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 								args = args.slice(1);
 								var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
 								var rightX = Math.max.apply(this,rightXArgs); 
-
-								return rightX >= PACKAGE_MIN_WIDTH ? rightX : PACKAGE_MIN_WIDTH; 
+								var rightXPlusPadding = rightX + PACKAGE_RIGHT_PADDING; 
+								return rightXPlusPadding >= PACKAGE_MIN_WIDTH ? rightXPlusPadding : PACKAGE_MIN_WIDTH; 
 							}
 						);
 				
@@ -377,8 +377,9 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 								args = args.slice(1);
 								var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
 								var bottomY = Math.max.apply(this,bottomYArgs); 
+								var bottomYPlusPadding = bottomY + PACKAGE_LEFT_PADDING; 
 
-								return bottomY  >= PACKAGE_MIN_HEIGHT ? bottomY : PACKAGE_MIN_HEIGHT ; 
+								return bottomYPlusPadding  >= PACKAGE_MIN_HEIGHT ? bottomYPlusPadding : PACKAGE_MIN_HEIGHT ; 
 							}
 						);
 						cm.Constraint(
