@@ -33,6 +33,7 @@ function init(evt) {
 			behaviours:behaviours,
 			constructors:constructors,
 			constraintGraph:constraintGraph,
+			requestLayout:requestLayout
 		}});
 
 	svgRoot.behaviours = {

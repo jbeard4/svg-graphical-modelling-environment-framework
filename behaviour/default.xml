@@ -150,6 +150,8 @@
 
 				//move group
 				modules.svgHelper.translate(draggingEntity,tDelta.dx,tDelta.dy);
+
+				modules.requestLayout();
 			</script>
 		</onexit>
 
