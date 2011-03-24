@@ -218,8 +218,64 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			return classIconG;
 		},
 
-		PackageIcon : function(){
-			
+		PackageIcon : function(x,y){
+			var icon = svg.group();
+			var nameContainerRect = svg.rect(icon,0,0,1,1);
+			var nameText = svg.text(icon,x,y,"Package");
+
+			nameContainerRect.id = "nameContainerRect";
+			nameText.id = "nameText";
+
+			var classContainerRect = svg.rect(icon,0,0,100,100);	//set an initial height
+			classContainerRect.id = "classContainerRect";
+
+			//create constraint
+
+			constraintGraph.push(
+				//nameContainerRect bounding box around the text
+				cm.Constraint(
+					cm.NodeAttr(nameContainerRect,"height"),
+					cm.NodeAttrExpr(nameText,"height")
+				),
+				cm.Constraint(
+					cm.NodeAttr(nameContainerRect,"width"),
+					cm.NodeAttrExpr(nameText,"width")
+				),
+				cm.Constraint(
+					cm.NodeAttr(nameContainerRect,"x"),
+					cm.NodeAttrExpr(nameText,"x")
+				),
+				cm.Constraint(
+					cm.NodeAttr(nameContainerRect,"y"),
+					cm.NodeAttrExpr(nameText,"y")
+				),
+				
+
+				//classContainerRect
+				cm.Constraint(
+					cm.NodeAttr(classContainerRect,"y"),
+					cm.NodeAttrExpr(nameContainerRect,["y","height"],cm.sum)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRect,"x"),
+					cm.NodeAttrExpr(nameContainerRect,"x")
+				)
+
+			);
+
+			icon.behaviours = {
+				DRAGGABLE : true,
+				ARROW_SOURCE : true,
+				ARROW_TARGET : true
+			};
+
+			classContainerRect.behaviours = {
+				DROP_SOURCE : true
+			};
+		
+			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
+
+			return icon;
 			
 		},
 
