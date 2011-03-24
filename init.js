@@ -1,5 +1,9 @@
 function init(evt) {     
+	Node.prototype.behaviours = {};
+
 	var svgRoot = evt.target.ownerDocument.documentElement;
+
+	//var rootRectDropTarget = svg.rect(0,0,"100%","100%",{fill:"white",stroke:"none"});
 
 	var svg = new $.svg._wrapperClass(         
 		svgRoot,

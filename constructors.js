@@ -6,6 +6,172 @@
 
 function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer){
 
+	//TODO: change the parameter names
+	function setupDropTarget(classContainerRect,icon,spacing){
+		
+		//setup behaviour tag
+		classContainerRect.behaviours.DROP_TARGET = true;
+
+		//setup event listeners
+		["mouseover","mouseout"].forEach(function(eventName){
+			classContainerRect.addEventListener(eventName,function(e){
+				e.preventDefault();
+				//FIXME: this is interesting. in order to not conflict with drag-and-drop behaviour (parent has arrow target), we need to not stop event propagation. when generating the environment, we will need to determine the strict conditions that require us to stop event propagation, or not
+				//e.stopPropagation();	
+				defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classContainerRect})
+			},false);
+		});
+
+		//expose the interface
+		classContainerRect.setHighlight = function(){
+			$(classContainerRect).addClass("highlighted");
+		}
+
+		classContainerRect.unsetHighlight = function(){
+			$(classContainerRect).removeClass("highlighted");
+		}
+
+		//make these things public properties... make them addressable as "dropconstraints"
+
+		icon.classContainerRectChildren = [];	//TODO: we could encode this in DOM
+
+		classContainerRect.dropShape = function(shape){
+			//debugger;
+			console.log("here");
+
+			//modify the shape's ctm to match the parent's
+			//TODO: move this out into SVG helper lib?
+			var m2 = shape.getTransformToElement(this);
+
+			var tl = shape.transform.baseVal;
+			var t = tl.numberOfItems ? tl.getItem(0) : shape.ownerSVGElement.createSVGTransform();
+			var m = t.matrix;
+			t.setMatrix(m2);
+			tl.initialize(t);
+
+			//remove him from previous drop target, if it exists
+			//bookkeeping, bookkeeping...
+			var p = shape.parentNode;
+			if(p.classContainerRectChildren){
+				removeFromList(shape,p.classContainerRectChildren);
+			} 
+
+			["classContainerRectXConstraint",
+				"classContainerRectYConstraint",
+				"classContainerRectWidthConstraint",
+				"classContainerRectHeightConstraint"].forEach(function(prop){
+
+				var constraint = p[prop];
+
+				if(constraint){
+					//here we are trying to weed out the nodeAttrs in this constraint dest for which 'shape' is the node
+					constraint.dest.forEach(function(nodeAttrExpr){
+						nodeAttrExpr.nodeAttrs = nodeAttrExpr.nodeAttrs.filter(function(nodeAttr){
+							return nodeAttr.node !== shape;
+						}); 
+					});
+
+					//filter out empty nodeAttrs
+					constraint.dest = constraint.dest.filter(function(nodeAttrExpr){
+						return nodeAttrExpr.nodeAttrs.length; 
+					});
+
+					if(!constraint.dest){
+						//remove constraint from graph and delete property on the parent object
+						removeFromList(constraint,constraintGraph);
+						delete p[prop];	
+					}
+				}
+
+			})
+
+			//now go ahead and add him to the new icon
+			icon.classContainerRectChildren.push(shape); 
+
+			//furthermore, move stuff to be children of the group
+			shape.parentNode.removeChild(shape);
+
+			//TODO: we may want a separate group just for these children
+			icon.appendChild(shape);	
+
+			//containment relationship... for all of his targets
+			//minx, miny for all shapes he contains
+			//maxx, maxy for all shapes he contains
+			//debugger;
+			if(!icon.classContainerRectXConstraint){
+				icon.classContainerRectXConstraint =
+					cm.Constraint(
+						cm.NodeAttr(this,"x"),
+						cm.NodeAttrExpr(shape,"x",cm.dec(spacing.leftPadding)),
+						Math.min
+					);
+
+				icon.classContainerRectYConstraint =
+					cm.Constraint(
+						cm.NodeAttr(this,"y"),
+						cm.NodeAttrExpr(shape,"y",cm.dec(spacing.topPadding)),
+						Math.min
+					);
+
+				icon.classContainerRectWidthConstraint =
+					cm.Constraint(
+						cm.NodeAttr(this,"width"),
+						[cm.NodeAttrExpr(this,"x"),
+							cm.NodeAttrExpr(shape,["x","width"],cm.sum)],
+						function(classContainerRectX){
+							//TODO: read arbitrary arguments for second parameter
+
+							var args = Array.prototype.slice.call(arguments);
+							args = args.slice(1);
+							var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
+							var rightX = Math.max.apply(this,rightXArgs); 
+							var rightXPlusPadding = rightX + spacing.rightPadding; 
+							return rightXPlusPadding >= spacing.minWidth ? rightXPlusPadding : spacing.minWidth; 
+						}
+					);
+			
+				icon.classContainerRectHeightConstraint = 
+					cm.Constraint(
+						cm.NodeAttr(this,"height"),
+						[cm.NodeAttrExpr(this,"y"),
+							cm.NodeAttrExpr(shape,["y","height"],cm.sum)],
+						function(classContainerRectY,shapeBottomY){
+							//TODO: read arbitrary arguments for second parameter
+							var args = Array.prototype.slice.call(arguments);
+							args = args.slice(1);
+							var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
+							var bottomY = Math.max.apply(this,bottomYArgs); 
+							var bottomYPlusPadding = bottomY + spacing.leftPadding; 
+
+							return bottomYPlusPadding  >= spacing.minHeight ? bottomYPlusPadding : spacing.minHeight ; 
+						}
+					);
+					cm.Constraint(
+						cm.NodeAttr(this,"height"),
+						cm.NodeAttrExpr(shape,["y","height"],cm.sum),
+						Math.max
+					);
+
+				//push
+				constraintGraph.push(icon.classContainerRectXConstraint,
+							icon.classContainerRectYConstraint,
+							icon.classContainerRectWidthConstraint,
+							icon.classContainerRectHeightConstraint);
+			}else{
+				icon.classContainerRectXConstraint.dest.push(cm.NodeAttrExpr(shape,"x"));
+				icon.classContainerRectYConstraint.dest.push(cm.NodeAttrExpr(shape,"y"));
+				icon.classContainerRectWidthConstraint.dest.push(cm.NodeAttrExpr(shape,["x","width"],cm.sum));
+				icon.classContainerRectHeightConstraint.dest.push(cm.NodeAttrExpr(shape,["y","height"],cm.sum));
+			}
+
+			requestLayout();
+		}
+
+		classContainerRect.hasHierarchicalChild = function(shape){
+			return icon.classContainerRectChildren.indexOf(shape) !== -1; 
+		}
+	}
+
 	function removeFromList(element,list){
 		return list.splice(list.indexOf(element),1);
 	}
@@ -276,180 +442,14 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				},false);
 			});
 
-			["mouseover","mouseout"].forEach(function(eventName){
-				classContainerRect.addEventListener(eventName,function(e){
-					e.preventDefault();
-					//FIXME: this is interesting. in order to not conflict with drag-and-drop behaviour (parent has arrow target), we need to not stop event propagation. when generating the environment, we will need to determine the strict conditions that require us to stop event propagation, or not
-					//e.stopPropagation();	
-					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classContainerRect})
-				},false);
-			});
+			setupDropTarget(classContainerRect,icon,
+						{topPadding:PACKAGE_TOP_PADDING,
+							bottomPadding:PACKAGE_BOTTOM_PADDING,
+							leftPadding:PACKAGE_LEFT_PADDING,
+							rightPadding:PACKAGE_RIGHT_PADDING,
+							minWidth:PACKAGE_MIN_WIDTH,
+							minHeight:PACKAGE_MIN_HEIGHT});
 
-			//FIXME: I think I really shouldn't be adding this type of stuff directly to DOM objects...
-			classContainerRect.setHighlight = function(){
-				$(classContainerRect).addClass("highlighted");
-			}
-
-			classContainerRect.unsetHighlight = function(){
-				$(classContainerRect).removeClass("highlighted");
-			}
-
-			/*
-			var classContainerRectXConstraint,
-				classContainerRectYConstraint,
-				classContainerRectWidthConstraint,
-				classContainerRectHeightConstraint;
-			*/
-
-			//make these things public properties... make them addressable as "dropconstraints"
-
-			icon.classContainerRectChildren = [];	//TODO: we could encode this in DOM
-
-			classContainerRect.dropShape = function(shape){
-				//debugger;
-				console.log("here");
-
-				//modify the shape's ctm to match the parent's
-				//TODO: move this out into SVG helper lib?
-				var m2 = shape.getTransformToElement(this);
-
-				var tl = shape.transform.baseVal;
-				var t = tl.numberOfItems ? tl.getItem(0) : shape.ownerSVGElement.createSVGTransform();
-				var m = t.matrix;
-				t.setMatrix(m2);
-				tl.initialize(t);
-
-				//remove him from previous drop target, if it exists
-				//bookkeeping, bookkeeping...
-				var p = shape.parentNode;
-				if(p.classContainerRectChildren){
-					removeFromList(shape,p.classContainerRectChildren);
-				} 
-
-				["classContainerRectXConstraint",
-					"classContainerRectYConstraint",
-					"classContainerRectWidthConstraint",
-					"classContainerRectHeightConstraint"].forEach(function(prop){
-
-					var constraint = p[prop];
-
-					if(constraint){
-						//here we are trying to weed out the nodeAttrs in this constraint dest for which 'shape' is the node
-						constraint.dest.forEach(function(nodeAttrExpr){
-							nodeAttrExpr.nodeAttrs = nodeAttrExpr.nodeAttrs.filter(function(nodeAttr){
-								return nodeAttr.node !== shape;
-							}); 
-						});
-
-						//filter out empty nodeAttrs
-						constraint.dest = constraint.dest.filter(function(nodeAttrExpr){
-							return nodeAttrExpr.nodeAttrs.length; 
-						});
-
-						if(!constraint.dest){
-							//remove constraint from graph and delete property on the parent object
-							removeFromList(constraint,constraintGraph);
-							delete p[prop];	
-						}
-					}
-
-				})
-
-				//now go ahead and add him to the new icon
-				icon.classContainerRectChildren.push(shape); 
-
-				//furthermore, move stuff to be children of the group
-				shape.parentNode.removeChild(shape);
-
-				//TODO: we may want a separate group just for these children
-				icon.appendChild(shape);	
-
-				//containment relationship... for all of his targets
-				//minx, miny for all shapes he contains
-				//maxx, maxy for all shapes he contains
-				//debugger;
-				if(!icon.classContainerRectXConstraint){
-					icon.classContainerRectXConstraint =
-						cm.Constraint(
-							cm.NodeAttr(this,"x"),
-							cm.NodeAttrExpr(shape,"x",cm.dec(PACKAGE_LEFT_PADDING)),
-							Math.min
-						);
-
-					icon.classContainerRectYConstraint =
-						cm.Constraint(
-							cm.NodeAttr(this,"y"),
-							cm.NodeAttrExpr(shape,"y",cm.dec(PACKAGE_TOP_PADDING)),
-							Math.min
-						);
-
-					icon.classContainerRectWidthConstraint =
-						cm.Constraint(
-							cm.NodeAttr(this,"width"),
-							[cm.NodeAttrExpr(this,"x"),
-								cm.NodeAttrExpr(shape,["x","width"],cm.sum)],
-							function(classContainerRectX){
-								//TODO: read arbitrary arguments for second parameter
-
-								var args = Array.prototype.slice.call(arguments);
-								args = args.slice(1);
-								var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
-								var rightX = Math.max.apply(this,rightXArgs); 
-								var rightXPlusPadding = rightX + PACKAGE_RIGHT_PADDING; 
-								return rightXPlusPadding >= PACKAGE_MIN_WIDTH ? rightXPlusPadding : PACKAGE_MIN_WIDTH; 
-							}
-						);
-				
-					icon.classContainerRectHeightConstraint = 
-						cm.Constraint(
-							cm.NodeAttr(this,"height"),
-							[cm.NodeAttrExpr(this,"y"),
-								cm.NodeAttrExpr(shape,["y","height"],cm.sum)],
-							function(classContainerRectY,shapeBottomY){
-								//TODO: read arbitrary arguments for second parameter
-								var args = Array.prototype.slice.call(arguments);
-								args = args.slice(1);
-								var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
-								var bottomY = Math.max.apply(this,bottomYArgs); 
-								var bottomYPlusPadding = bottomY + PACKAGE_LEFT_PADDING; 
-
-								return bottomYPlusPadding  >= PACKAGE_MIN_HEIGHT ? bottomYPlusPadding : PACKAGE_MIN_HEIGHT ; 
-							}
-						);
-						cm.Constraint(
-							cm.NodeAttr(this,"height"),
-							cm.NodeAttrExpr(shape,["y","height"],cm.sum),
-							Math.max
-						);
-
-					//push
-					constraintGraph.push(icon.classContainerRectXConstraint,
-								icon.classContainerRectYConstraint,
-								icon.classContainerRectWidthConstraint,
-								icon.classContainerRectHeightConstraint);
-				}else{
-					icon.classContainerRectXConstraint.dest.push(cm.NodeAttrExpr(shape,"x"));
-					icon.classContainerRectYConstraint.dest.push(cm.NodeAttrExpr(shape,"y"));
-					icon.classContainerRectWidthConstraint.dest.push(cm.NodeAttrExpr(shape,["x","width"],cm.sum));
-					icon.classContainerRectHeightConstraint.dest.push(cm.NodeAttrExpr(shape,["y","height"],cm.sum));
-				}
-
-				requestLayout();
-			}
-
-			icon.contains = function(shape){
-				//this isn't strictly correct. we should keep an array of subentities
-				return children.indexOf(shape) !== -1;
-			}
-
-			classContainerRect.hasHierarchicalChild = function(shape){
-				return icon.classContainerRectChildren.indexOf(shape) !== -1; 
-			}
-
-
-			//TODO: undrop shape somehow
-			//rollback all constraint relationships, etc.
-		
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 
 			return icon;
