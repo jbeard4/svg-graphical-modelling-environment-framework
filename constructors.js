@@ -47,7 +47,11 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				//nameText
 				cm.Constraint(
 					cm.NodeAttr(nameText,"x"),
-					cm.NodeAttrExpr(nameContainerRect,"x")		//TODO: this should be centered - fn of width and x
+					[cm.NodeAttrExpr(nameContainerRect,"x"),		//TODO: this should be centered - fn of width and x
+						cm.NodeAttrExpr(nameContainerRect,"width")],
+					function(x,width){
+						return (width - this.getBBox().width)/2 + x;
+					}
 				),
 				cm.Constraint(
 					cm.NodeAttr(nameText,"y"),
