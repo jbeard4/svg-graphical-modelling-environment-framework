@@ -38,12 +38,51 @@ function init(evt) {
 	svgRoot.behaviours = {
 		CREATOR : true
 	};
+
+	["keydown","keyup"].forEach(function(eventName){
+		svgRoot.addEventListener(eventName,function(e){
+			var eventMap = {
+				8:  "backspace",
+				13: "enter",
+				27: "esc",
+				37: "left",
+				38: "up",
+				39: "right",
+				40: "down",
+			}
+
+			var charCodeEventMap = {
+				34 : "double_quote",
+				36: "bling",
+				48 : "zero",
+				49 : "one",
+				50 : "two",
+				51 : "three",
+				52 : "four",
+				58 : "colon",
+				64 : "at"
+			}
+
+
+			var scEvent = eventMap[e.keyCode] || charCodeEventMap[e.charCode] || String.fromCharCode(e.charCode);
+
+			if(!scEvent){
+				console.error("Could not turn keyboard event into statechart event");
+			}
+
+			if(e.ctrlKey){
+				scEvent = "ctrl_" + scEvent;
+			}
+
+			e.preventDefault();
+
+			compiledStatechartInstance.GEN(scEvent,({domEvent:e,currentTarget:svgRoot}));
+		},false);
+	});
 	
 
 	//hook up DOM events for svg root
-	["mousedown","mouseup","mousemove"
-		//,"keydown","keyup"	//TODO: add these in later
-			].forEach(function(eventName){
+	["mousedown","mouseup","mousemove"].forEach(function(eventName){
 		svgRoot.addEventListener(eventName,function(e){
 			e.preventDefault();
 			compiledStatechartInstance[eventName]({domEvent:e,currentTarget:svgRoot});
@@ -51,9 +90,18 @@ function init(evt) {
 	});
 
 
+	/*
 	var g1 = constructors.ClassIcon(100,100);
 	var g2 = constructors.ClassIcon(200,200);
 	var c = constructors.CurveIcon(g1);
 	c.setEndPoint(300,300); 
 	c.setTarget(g2); 
+
+	var g3 = constructors.ClassIcon(200,100);
+	var g4 = constructors.ClassIcon(300,200);
+	var c2 = constructors.CurveIcon(g3);
+	c2.setEndPoint(300,300); 
+	c2.setTarget(g4); 
+	c2.remove();
+	*/
 }

@@ -202,7 +202,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			};
 		
 			//add drag behaviour
-			["mousedown","mouseup","mousemove"].forEach(function(eventName){
+			["mousedown","mouseup","mousemove","mouseover","mouseout"].forEach(function(eventName){
 				//we call e.preventDefault for all of these events to prevent firefox from using its default dragging behaviour: 
 				//see https://bugzilla.mozilla.org/show_bug.cgi?id=525591#c4
 				//it may be the case that only certain events (md, mu, or mm) need to be canceled to prevent this behaviour

@@ -39,7 +39,7 @@
 		<!-- you can see here that there is an implicit understanding of priorities based on document order -->
 		<transition event="mousedown" target="drawing_curve" 	
 			cond="_event.data.domEvent.ctrlKey &amp;&amp; 
-				_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
+				_event.data.currentTarget.behaviours[modules.behaviours.ARROW_SOURCE]">
 		</transition>
 
 		<transition event="mousedown" target="dragging"
@@ -48,7 +48,7 @@
 
 	</state>
 
-	<state id="drawing_curve">
+	<state id="drawing_curve" initial="before_mouseover_drop_target">
 		<datamodel>
 			<data id="curveBeingDrawn"/>
 		</datamodel>
@@ -60,28 +60,52 @@
 			</script>
 		</onentry>
 	
-		<transition event="esc">
-			<!-- TODO: accept keyboard events -->
-			<!-- TODO: implement rollback here: delete the arrow, delete the constraint -->
-		</transition>
-
-		<!-- TODO: probably want to break this down to mousedown/mouseup/etc -->
-		<transition event="mousedown" target="idle"
-			cond="_event.data.currentTarget.behaviours[_event.data.currentTarget.behaviours.ARROW_TARGET]">
-		
+		<!-- normally we would roll back points here, but because we assume he's a line, we just delete it and return to idle.
+			other stuff will have more sophisticated behaviour involving rolling back points -->
+		<transition event="esc" target="idle">
 			<script>
-				//set the arrow target
-				curveBeingDrawn.setTarget(_event.data.currentTarget);
+				curveBeingDrawn.remove();
 			</script>
-			
 		</transition>
 
 		<transition event="mousemove">
 			<script>
 				//update the arrow head
-				curveBeingDrawn.setEndPoint(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+				//two-pixel off-set to prevent arrow from stealing events
+				curveBeingDrawn.setEndPoint(_event.data.domEvent.clientX-2,_event.data.domEvent.clientY-2);
 			</script>
 		</transition>
+
+		<state id="before_mouseover_drop_target">
+			<onentry>
+				<log expr="'before_mouseover_drop_target'"/>
+			</onentry>
+
+			<transition target="after_mouseover_drop_target" event="mouseover"
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]"/>
+
+		</state>
+
+		<state id="after_mouseover_drop_target">
+			<!-- TODO: probably want to add a style change to the drop target -->
+			<onentry>
+				<log expr="'after_mouseover_drop_target'"/>
+			</onentry>
+
+			<!-- TODO: make sure that he's the same target before returning? -->
+			<transition target="before_mouseover_drop_target" event="mouseout"
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]"/>
+
+			<transition event="mousedown" target="idle">
+			
+				<script>
+					//set the arrow target
+					curveBeingDrawn.setTarget(_event.data.currentTarget);
+				</script>
+				
+			</transition>
+
+		</state>
 	</state>
 
 	<state id="after_ctrl_mousedown_on_creator">
