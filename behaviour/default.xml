@@ -1,0 +1,103 @@
+<scxml 
+	xmlns="http://www.w3.org/2005/07/scxml"
+	version="1.0"
+	profile="ecmascript"
+	initial="initial_default">
+
+	<script>
+		function computeTDelta(oldEvent,newEvent){
+			//summary:computes the offset between two events; to be later used with this.translate
+			var dx = newEvent.clientX - oldEvent.clientX;
+			var dy = newEvent.clientY - oldEvent.clientY;
+
+			return {'dx':dx,'dy':dy};
+		}
+	</script>
+
+	<datamodel>
+		<data id="firstEvent"/>
+		<data id="eventStamp"/>
+		<data id="tDelta"/>
+
+		<data id="controller"/>
+		<data id="modules"/>
+	</datamodel>
+
+	<state id="initial_default">
+		<transition event="init" target="idle">
+			<assign location="controller" expr="_event.data.controller"/>
+			<assign location="modules" expr="_event.data.modules"/>
+		</transition>
+	</state>
+
+	<state id="idle">
+		<transition event="mousedown" target="dragging"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
+			<assign location="draggingEntity" expr="_event.data.currentTarget"/>
+		</transition>
+
+		<transition event="mousedown" target="after_ctrl_mousedown" 	
+			cond="_event.data.domEvent.ctrlKey &amp;&amp; 
+				_event.data.currentTarget.behaviours[modules.behaviours.CREATOR]">
+		</transition>
+	</state>
+
+	<state id="after_ctrl_mousedown">
+		<transition target="idle" event="mouseup">
+			<script>
+				//this will be changed to create whatever the radio buttons point to
+				modules.constructors.ClassIcon(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+			</script>
+		</transition>
+	</state>
+
+	<state id="dragging">
+		<datamodel>
+			<data id="draggingEntity"/>
+			<data id="draggingRect"/>
+		</datamodel>
+
+		<onentry>
+			<assign location="firstEvent" expr="_event.data.domEvent"/>
+			<assign location="eventStamp" expr="_event.data.domEvent"/>
+			<script>
+				var bbox = modules.svgHelper.getBBoxInCanvasSpace(draggingEntity);
+				console.log(bbox);
+
+				draggingRect = 	modules.svg.rect(bbox.x,bbox.y,bbox.width,bbox.height);
+				draggingRect.id="dragging";
+
+				console.log(draggingRect);
+
+				firstEvent = evtStamp = _event.data.domEvent;
+			</script>
+		</onentry>
+
+		<onexit>
+			<script>
+				//update the locations of the dragged entities 
+				//TODO: make this all selected entities
+				modules.svg.remove(draggingRect);
+
+				tDelta = computeTDelta(firstEvent,_event.data.domEvent)
+
+				//move group
+				modules.svgHelper.translate(draggingEntity,tDelta.dx,tDelta.dy);
+			</script>
+		</onexit>
+
+
+		<transition event="mouseup" target="idle">
+		</transition>
+
+		<!-- no target: this is a static reaction (targetless transition in SCXML parlance) -->
+		<transition event="mousemove">
+			<assign location="tDelta" expr="computeTDelta(eventStamp,_event.data.domEvent)"/>
+			<script>
+				modules.svgHelper.translate(draggingRect,tDelta.dx,tDelta.dy);
+			</script>
+			<assign location="eventStamp" expr="_event.data.domEvent"/>
+		</transition>
+	</state>
+
+</scxml>

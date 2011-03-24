@@ -4,7 +4,7 @@
 **/
 
 
-function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,dragBehaviourModule,svg){
+function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg){
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
@@ -191,8 +191,25 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			
 			},false);
 
+			//all entitites with some default behaviour get the appropriate event listeners hooked up.
+			//there is one default behaviour statechart instance shared by all elements
+			//FIXME: do we or do we not allow event propagation????
+
+			classIconG.behaviours = {
+				DRAGGABLE : true
+			};
+		
 			//add drag behaviour
-			dragBehaviourModule.addBehaviour(classIconG);
+			["mousedown","mouseup","mousemove"].forEach(function(eventName){
+				//we call e.preventDefault for all of these events to prevent firefox from using its default dragging behaviour: 
+				//see https://bugzilla.mozilla.org/show_bug.cgi?id=525591#c4
+				//it may be the case that only certain events (md, mu, or mm) need to be canceled to prevent this behaviour
+				classIconG.addEventListener(eventName,function(e){
+					e.preventDefault();
+					e.stopPropagation();
+					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classIconG})
+				},false);
+			});
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 		},

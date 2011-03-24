@@ -2,7 +2,7 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 
-	<script type="application/ecmascript" xlink:href="behaviour/drag-and-drop.js"></script> 
+	<script type="application/ecmascript" xlink:href="build/default.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/svg.js"></script> 
 	<script type="application/ecmascript" xlink:href="c.js"></script> 
 	<script type="application/ecmascript" xlink:href="constructors.js"></script> 
@@ -11,15 +11,6 @@
 	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
 	<script type="application/ecmascript" xlink:href="init.js"/>
 
-	<!--
-	<script xlink:href="2D.js"/>
-	<script xlink:href="Intersection.js"/>
-	<script xlink:href="getDomInterface.js"/>
-	<script xlink:href="drag-and-drop.js"/>
-	<script xlink:href="2D.js"/>
-	<script xlink:href="svg.js"/>
-	<script xlink:href="c.js"/>
-	-->
 	<style>
 		line.edge,path.edge { 
 			marker-end: url(#Triangle);

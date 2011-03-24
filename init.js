@@ -1,6 +1,8 @@
 function init(evt) {     
+	var svgRoot = evt.target.ownerDocument.documentElement;
+
 	var svg = new $.svg._wrapperClass(         
-		evt.target.ownerDocument.documentElement,
+		svgRoot,
 		{clientWidth: "100%", clientHeight: "100%"});     
 
 	var constraintGraph = [];
@@ -14,17 +16,44 @@ function init(evt) {
 
 	var svgModule = SVGHelper();
 	var constraintModule = ConstraintModule(svgModule);
-	var dragBehaviourModule = DragBehaviourModule(svg,document.documentElement,svgModule);
 
-	var constructors = setupConstructors(null,constraintModule,constraintGraph,requestLayout,dragBehaviourModule,svg); 
+	var behaviours = {
+		DRAGGABLE : "DRAGGABLE",
+		CREATOR : "CREATOR"
+	}
+
+	//hook up behaviour
+	compiledStatechartInstance = new StatechartExecutionContext(); 
+
+	var constructors = setupConstructors(compiledStatechartInstance,constraintModule,constraintGraph,requestLayout,svg); 
+
+	//initialize
+	compiledStatechartInstance.initialize();
+
+	compiledStatechartInstance.init({
+		controller:{},
+		modules:{
+			svgHelper:svgModule,
+			svg:svg,
+			behaviours:behaviours,
+			constructors:constructors
+		}});
+
+	svgRoot.behaviours = {
+		CREATOR : true
+	};
+	
+
+	//hook up DOM events for svg root
+	["mousedown","mouseup","mousemove"
+		//,"keydown","keyup"	//TODO: add these in later
+			].forEach(function(eventName){
+		svgRoot.addEventListener(eventName,function(e){
+			e.preventDefault();
+			compiledStatechartInstance[eventName]({domEvent:e,currentTarget:svgRoot});
+		},false);
+	});
+
 
 	constructors.ClassIcon(100,100);
-
-	document.documentElement.addEventListener("mousedown",function(e){
-		if(e.ctrlKey){
-			constructors.ClassIcon(e.clientX,e.clientY);
-		}
-	},false);
-
-	
 }
