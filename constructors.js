@@ -4,7 +4,7 @@
 **/
 
 
-function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg){
+function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer){
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
@@ -233,7 +233,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//create the group and the path
 			//also the source... with the second drop?
 			//return the group
-			var line = svg.line(x,y,x+1,y+1);
+			var line = svg.line(edgeLayer,x,y,x+1,y+1);
 			line.setAttributeNS(null,"class","edge");	//TODO: jquery-ify this statement
 
 			var targetConstraintX,

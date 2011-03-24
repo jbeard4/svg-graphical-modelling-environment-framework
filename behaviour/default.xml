@@ -77,9 +77,6 @@
 		</transition>
 
 		<state id="before_mouseover_drop_target">
-			<onentry>
-				<log expr="'before_mouseover_drop_target'"/>
-			</onentry>
 
 			<transition target="after_mouseover_drop_target" event="mouseover"
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]"/>
@@ -88,9 +85,6 @@
 
 		<state id="after_mouseover_drop_target">
 			<!-- TODO: probably want to add a style change to the drop target -->
-			<onentry>
-				<log expr="'after_mouseover_drop_target'"/>
-			</onentry>
 
 			<!-- TODO: make sure that he's the same target before returning? -->
 			<transition target="before_mouseover_drop_target" event="mouseout"

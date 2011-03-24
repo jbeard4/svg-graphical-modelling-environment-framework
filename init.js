@@ -5,6 +5,8 @@ function init(evt) {
 		svgRoot,
 		{clientWidth: "100%", clientHeight: "100%"});     
 
+	var edgeLayer = svg.group("$edge-layer");
+
 	var constraintGraph = [];
 
 	function requestLayout(){
@@ -20,7 +22,7 @@ function init(evt) {
 	//hook up behaviour
 	compiledStatechartInstance = new StatechartExecutionContext(); 
 
-	var constructors = setupConstructors(compiledStatechartInstance,constraintModule,constraintGraph,requestLayout,svg); 
+	var constructors = setupConstructors(compiledStatechartInstance,constraintModule,constraintGraph,requestLayout,svg,edgeLayer); 
 
 	//initialize
 	compiledStatechartInstance.initialize();
