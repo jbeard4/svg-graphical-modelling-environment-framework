@@ -9,20 +9,23 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
 		ClassIcon : function(x,y){
-			var classIconG = svg.group();
-			var nameContainerRect = svg.rect(classIconG,x,y,1,1);
-			var nameText = svg.text(classIconG,0,0,"Class");	//we really shouldn't set x and y here... maybe use different api?
+			
+			var icon = svg.group(nodeLayer);
+			var nameContainerRect = svg.rect(icon,x,y,1,1);
+			var nameText = svg.text(icon,0,0,"Class");	//we really shouldn't set x and y here... maybe use different api?
 
 			nameContainerRect.id = "nameContainerRect";
 			nameText.id = "nameText";
 
-			var attributeListRect = svg.rect(classIconG,0,0,100,10);	//set an initial height
+			var attributeListRect = svg.rect(icon,0,0,100,10);	//set an initial height
 			attributeListRect.id = "attributeListRect";
 
 			var NEW_ATTRIBUTE_BUTTON_RADIUS = 5; 
 
-			var newAttributeButton = svg.circle(classIconG,0,0,NEW_ATTRIBUTE_BUTTON_RADIUS);
+			var newAttributeButton = svg.circle(icon,0,0,NEW_ATTRIBUTE_BUTTON_RADIUS);
 			newAttributeButton.id = "newAttributeButton";
+
+			var children = [icon,nameContainerRect,nameText,attributeListRect,newAttributeButton];
 
 			//create constraint
 
@@ -125,7 +128,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 				//create a new attribute and add him to the constraint list
 				//FIXME: really we would prompt the user here... in fact maybe I should just prompt... or pop up a dialog. or just let the user type, then focus the text, etc.
-				var newAttribute = svg.text(classIconG,x,y,"+attributeName : attributeType");	
+				var newAttribute = svg.text(icon,x,y,"+attributeName : attributeType");	
 				newAttribute.id = "newAttribute" + attributes.length;
 
 
@@ -195,7 +198,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//there is one default behaviour statechart instance shared by all elements
 			//FIXME: do we or do we not allow event propagation????
 
-			classIconG.behaviours = {
+			icon.behaviours = {
 				DRAGGABLE : true,
 				ARROW_SOURCE : true,
 				ARROW_TARGET : true
@@ -206,16 +209,21 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				//we call e.preventDefault for all of these events to prevent firefox from using its default dragging behaviour: 
 				//see https://bugzilla.mozilla.org/show_bug.cgi?id=525591#c4
 				//it may be the case that only certain events (md, mu, or mm) need to be canceled to prevent this behaviour
-				classIconG.addEventListener(eventName,function(e){
+				icon.addEventListener(eventName,function(e){
 					e.preventDefault();
 					e.stopPropagation();
-					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classIconG})
+					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:icon})
 				},false);
 			});
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 
-			return classIconG;
+			icon.contains = function(shape){
+				//this isn't strictly correct. we should keep an array of subentities
+				return children.indexOf(shape) !== -1;
+			}
+
+			return icon;
 		},
 
 		PackageIcon : function(x,y){
@@ -227,7 +235,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				PACKAGE_TOP_PADDING = 10,
 				PACKAGE_BOTTOM_PADDING = 10; 
 
-			var icon = svg.group();
+			var icon = svg.group(nodeLayer);
 			var nameContainerRect = svg.rect(icon,0,0,1,1);
 			var nameText = svg.text(icon,0,0,"Package");
 
@@ -236,6 +244,8 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 			var classContainerRect = svg.rect(icon,x,y,PACKAGE_MIN_WIDTH,PACKAGE_MIN_HEIGHT);	//set an initial height
 			classContainerRect.id = "classContainerRect";
+
+			var children = [icon,nameContainerRect,nameText,classContainerRect];
 
 			//create constraint
 
@@ -320,8 +330,20 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			var classContainerRectChildren = [];	//TODO: we could encode this in DOM
 
 			classContainerRect.dropShape = function(shape){
+				console.log("here");
 
-				classContainerRectChildren.push(classContainerRectChildren); 
+				//modify the shape's ctm to match the parent's
+				//TODO: move this out into SVG helper lib?
+				var m2 = classContainerRect.getCTM().inverse();
+
+				var tl = shape.transform.baseVal;
+				var t = tl.numberOfItems ? tl.getItem(0) : rawNode.ownerSVGElement.createSVGTransform();
+				var m = t.matrix;
+				var newM = m.multiply(m2);
+				t.setMatrix(newM);
+				tl.initialize(t);
+
+				classContainerRectChildren.push(shape); 
 
 				//furthermore, move stuff to be children of the group
 				shape.parentNode.removeChild(shape);
@@ -403,6 +425,16 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				requestLayout();
 			}
 
+			icon.contains = function(shape){
+				//this isn't strictly correct. we should keep an array of subentities
+				return children.indexOf(shape) !== -1;
+			}
+
+			classContainerRect.hasHierarchicalChild = function(shape){
+				return classContainerRectChildren.indexOf(shape) !== -1; 
+			}
+
+
 			//TODO: undrop shape somehow
 			//rollback all constraint relationships, etc.
 		
@@ -427,24 +459,30 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 			var targetConstraintX,
 				targetConstraintY,
-				sourceConstraintX = 
-					cm.Constraint(
-						cm.NodeAttr(line,"$startX"),
-						cm.NodeAttrExpr(source,"bbox"),
-						function(sourceBBox){
-							return sourceBBox.x + sourceBBox.width/2;
-						}
+				sourceConstraintX,
+				sourceConstraintY,
+				originalSourceConstraintX,
+				originalSourceConstraintY;
+ 
+			originalSourceConstraintX = sourceConstraintX = 
+				cm.Constraint(
+					cm.NodeAttr(line,"$startX"),
+					cm.NodeAttrExpr(source,"bbox"),
+					function(sourceBBox){
+						return sourceBBox.x + sourceBBox.width/2;
+					}
 
-					),
-				sourceConstraintY = 
-					cm.Constraint(
-						cm.NodeAttr(line,"$startY"),
-						cm.NodeAttrExpr(source,"bbox"),
-						function(sourceBBox){
-							return sourceBBox.y + sourceBBox.height/2;
-						}
+				);
 
-					);
+			originalSourceConstraintY = sourceConstraintY = 
+				cm.Constraint(
+					cm.NodeAttr(line,"$startY"),
+					cm.NodeAttrExpr(source,"bbox"),
+					function(sourceBBox){
+						return sourceBBox.y + sourceBBox.height/2;
+					}
+
+				);
 
 			constraintGraph.push(sourceConstraintX,sourceConstraintY);
 
@@ -456,8 +494,9 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					line.y2.baseVal.value = y;
 				},
 				setTarget : function(target){
+
 					//set up the constraint graph for the target
-					function getConstraintFunction(xOrY){
+					function getConstraintFunction(xOrY,isSource){
 						return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
 							var x0 = fromX + fromWidth/2;
 							var y0 = fromY + fromHeight/2;
@@ -467,9 +506,16 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 
 							var p1 = new Point2D(x0,y0),
-								p2 = new Point2D(x1,y1),
-								r1 = new Point2D(toX,toY),
+								p2 = new Point2D(x1,y1);
+
+							var r1,r2;
+							if(isSource){
+								r1 = new Point2D(fromX,fromY);
+								r2 = new Point2D(fromX + fromWidth, fromY + fromHeight);
+							}else{
+								r1 = new Point2D(toX,toY);
 								r2 = new Point2D(toX + toWidth, toY + toHeight);
+							}
 
 							var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
 
@@ -478,6 +524,13 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 							return point && point[xOrY];	//if there's no intersection, we might get back undefined
 						}
 					}
+
+
+					//remove and update sourceConstraintX and sourceConstraintY to avoid arrow occlusion 
+					[sourceConstraintX,sourceConstraintY].forEach(function(c){
+						constraintGraph.splice(constraintGraph.indexOf(c),1);
+					});
+
 
 					var depList = [cm.NodeAttrExpr(source,"x"),
 								cm.NodeAttrExpr(source,"y"),
@@ -488,31 +541,59 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 								cm.NodeAttrExpr(target,"width"),
 								cm.NodeAttrExpr(target,"height")];
 					
+					//set up target constraints
 					targetConstraintX = 
 						cm.Constraint(
 							cm.NodeAttr(line,"$endX"),
 							depList, 
-							getConstraintFunction("x")
+							getConstraintFunction("x",false)
 						);
 
 					targetConstraintY = 
 						cm.Constraint(
 							cm.NodeAttr(line,"$endY"),
 							depList, 
-							getConstraintFunction("y")
+							getConstraintFunction("y",false)
+						);
+				
+					//set up new sourceConstraintX and sourceConstraintY
+					sourceConstraintX = 
+						cm.Constraint(
+							cm.NodeAttr(line,"$startX"),
+							depList, 
+							getConstraintFunction("x",true)
 						);
 
-					constraintGraph.push(targetConstraintX,targetConstraintY);
+
+					sourceConstraintY = 
+						cm.Constraint(
+							cm.NodeAttr(line,"$startY"),
+							depList, 
+							getConstraintFunction("y",true)
+						);
+
+					constraintGraph.push(sourceConstraintX,
+								sourceConstraintY,
+								targetConstraintX,
+								targetConstraintY);
 
 					requestLayout();
 				},
 				rollback : function(){
 					//here using targetConstraintX/targetConstraintY to encode state 
 					if(targetConstraintX && targetConstraintY){
-						[targetConstraintX,targetConstraintY].forEach(function(c){
+						[sourceConstraintX,sourceConstraintY,targetConstraintX,targetConstraintY].forEach(function(c){
 							constraintGraph.splice(constraintGraph.indexOf(c),1);
 						});
+
+						sourceConstraintX = originalSourceConstraintX;
+						sourceConstraintY = originalSourceConstraintY;
+
+						constraintGraph.push(sourceConstraintX,sourceConstraintY);  
+
 						targetConstraintX = targetConstraintY = null;
+					
+						requestLayout();
 					}else{ 
 						this.remove();
 					}
@@ -537,7 +618,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		RadioButtonGroup : function(x,y){
 			var SPACE_BETWEEN_BUTTONS = 10;	//TODO: break this out into some kind of stylesheet
 
-			var icon = svg.group();
+			var icon = svg.group(nodeLayer);
 
 			var buttons = [],
 				selectedButton;

@@ -5,8 +5,8 @@ function init(evt) {
 		svgRoot,
 		{clientWidth: "100%", clientHeight: "100%"});     
 
-	var edgeLayer = svg.group("$edge-layer");
 	var nodeLayer = svg.group("$node-layer");
+	var edgeLayer = svg.group("$edge-layer");
 
 	var constraintGraph = [];
 

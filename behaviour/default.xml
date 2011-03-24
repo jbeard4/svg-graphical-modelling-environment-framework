@@ -180,7 +180,8 @@
 	
 			<transition target="after_mouseover_drop_target" event="mouseover"
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.DROP_TARGET]
-					&amp;&amp; dropTarget !== draggingEntity">
+					&amp;&amp; !(draggingEntity.contains(_event.data.currentTarget) 
+							|| _event.data.currentTarget.hasHierarchicalChild(draggingEntity))">
 				<assign location="dropTarget" expr="_event.data.currentTarget"/>
 			</transition>
 
