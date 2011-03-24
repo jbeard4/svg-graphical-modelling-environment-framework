@@ -4,7 +4,7 @@
 **/
 
 
-function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout){
+function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,dragBehaviourModule,svg){
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
@@ -190,6 +190,9 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				requestLayout();		
 			
 			},false);
+
+			//add drag behaviour
+			dragBehaviourModule.addBehaviour(classIconG);
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 		},

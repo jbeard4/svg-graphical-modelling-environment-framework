@@ -1,5 +1,5 @@
 function init(evt) {     
-	svg = new $.svg._wrapperClass(         
+	var svg = new $.svg._wrapperClass(         
 		evt.target.ownerDocument.documentElement,
 		{clientWidth: "100%", clientHeight: "100%"});     
 
@@ -14,12 +14,16 @@ function init(evt) {
 
 	var svgModule = SVGHelper();
 	var constraintModule = ConstraintModule(svgModule);
-	var constructors = setupConstructors(null,constraintModule,constraintGraph,requestLayout); 
+	var dragBehaviourModule = DragBehaviourModule(svg,document.documentElement,svgModule);
+
+	var constructors = setupConstructors(null,constraintModule,constraintGraph,requestLayout,dragBehaviourModule,svg); 
 
 	constructors.ClassIcon(100,100);
 
 	document.documentElement.addEventListener("mousedown",function(e){
-		constructors.ClassIcon(e.clientX,e.clientY);
+		if(e.ctrlKey){
+			constructors.ClassIcon(e.clientX,e.clientY);
+		}
 	},false);
 
 	

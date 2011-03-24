@@ -2,6 +2,7 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 
+	<script type="application/ecmascript" xlink:href="behaviour/drag-and-drop.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/svg.js"></script> 
 	<script type="application/ecmascript" xlink:href="c.js"></script> 
 	<script type="application/ecmascript" xlink:href="constructors.js"></script> 
