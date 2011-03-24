@@ -335,7 +335,7 @@ function ConstraintModule(svg){
 		Constraint : Constraint,
 		NodeAttrExpr : NodeAttrExpr,
 		NodeAttr : NodeAttr,
-		resolveGraphicalConstraints : function(visualObjects,constraints){
+		resolveGraphicalConstraints : function(constraints){
 			topoSortedNodes = topoSortNodes(constraints);
 			console.log("topoSortedNodes",topoSortedNodes);
 			performTopoSort(topoSortedNodes,constraints);
