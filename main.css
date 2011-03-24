@@ -1,0 +1,36 @@
+line.edge,path.edge { 
+	marker-end: url(#Triangle);
+	stroke: black; 
+	fill: none;
+}
+
+text {
+	fill : black;
+	stroke : none;
+	dominant-baseline : hanging;
+}
+
+circle {
+	fill : blue;
+	stroke : black;
+}
+
+rect {
+	fill : white;
+	stroke : black;
+}
+
+rect#dragging {
+	fill : none;
+	stroke : black;
+	stroke-dasharray : 1;
+}
+
+line {
+	fill : none;
+	stroke : black;
+}
+
+g.pressed rect {
+	fill : red;
+}

@@ -1,3 +1,4 @@
+<?xml-stylesheet type="text/css" href="main.css" ?>    
 <svg onload="init(evt)" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
@@ -12,42 +13,9 @@
 	<script type="application/ecmascript" xlink:href="batikCompatibility.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/jquery-1.2.6.js"></script> 
 	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
+	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svgdom.js"></script> 
 	<script type="application/ecmascript" xlink:href="init.js"/>
 
-	<style>
-		line.edge,path.edge { 
-			marker-end: url(#Triangle);
-			stroke: black; 
-			fill: none;
-		}
-
-		text {
-			fill : black;
-			stroke : none;
-			dominant-baseline : hanging;
-		}
-
-		circle {
-			fill : blue;
-			stroke : black;
-		}
-
-		rect {
-			fill : white;
-			stroke : black;
-		}
-
-		rect#dragging {
-			fill : none;
-			stroke : black;
-			stroke-dasharray : 1;
-		}
-
-		line {
-			fill : none;
-			stroke : black;
-		}
-	</style>
 	<defs>
 		<marker id="Triangle"
 			viewBox="-10 0 10 10" refX="0" refY="5" 

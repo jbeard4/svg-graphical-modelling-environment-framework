@@ -38,10 +38,6 @@ function init(evt) {
 			requestLayout:requestLayout
 		}});
 
-	svgRoot.behaviours = {
-		CREATOR : true
-	};
-
 	["keydown","keyup"].forEach(function(eventName){
 		svgRoot.addEventListener(eventName,function(e){
 			var eventMap = {
@@ -83,12 +79,33 @@ function init(evt) {
 		},false);
 	});
 	
+	//create a radio button group. associate this to the canvas
+	var radioButtonGroup = constructors.RadioButtonGroup(10,10);
+	radioButtonGroup.createButton("Class",constructors.ClassIcon); 
+	radioButtonGroup.createButton("Package",constructors.PackageIcon); 
+
+	//wrap the canvas in a nice object
+	//TODO: once again, I wonder if it would be better to, instead of relying on behaviours, just check for existence of representative functions, e.g. create()
+	var canvas = {
+		create : function(x,y){
+			//create whatever the radio buttons point to
+			var button = radioButtonGroup.getSelectedButton()  
+			if(button){
+				var constructor = button.getIconConstructor();
+				constructor(x,y);
+			}
+			
+		},
+		behaviours : {
+			CREATOR : true
+		}
+	};
 
 	//hook up DOM events for svg root
 	["mousedown","mouseup","mousemove"].forEach(function(eventName){
 		svgRoot.addEventListener(eventName,function(e){
 			e.preventDefault();
-			compiledStatechartInstance[eventName]({domEvent:e,currentTarget:svgRoot});
+			compiledStatechartInstance[eventName]({domEvent:e,currentTarget:canvas});
 		},false);
 	});
 

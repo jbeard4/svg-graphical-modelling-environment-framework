@@ -107,10 +107,17 @@
 	</state>
 
 	<state id="after_ctrl_mousedown_on_creator">
+		<datamodel>
+			<data id="creator"/>
+		</datamodel>
+
+		<onentry>
+			<assign location="creator" expr="_event.data.currentTarget"/>
+		</onentry>
+
 		<transition target="idle" event="mouseup">
 			<script>
-				//this will be changed to create whatever the radio buttons point to
-				modules.constructors.ClassIcon(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+				creator.create(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
 			</script>
 		</transition>
 	</state>
