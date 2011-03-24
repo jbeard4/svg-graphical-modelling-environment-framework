@@ -271,12 +271,13 @@ function ConstraintModule(svg){
 	*/
 	function performTopoSort(topoSortedNodes,constraints){
 		topoSortedNodes.forEach(function(n){
-			console.log("foo",n.toString());
 
 			var constraintsAssociatedWithNode = 
 				constraints.filter(function(c){
 					return c.source.equals(n);
 				});
+
+			//if(n.node.id === "nameText") debugger;
 
 			constraintsAssociatedWithNode.forEach(function(c){
 				var sourceNode = c.source.node;
@@ -318,7 +319,7 @@ function ConstraintModule(svg){
 						toReturn = destNodeAttrExpr.expr(destAttributeValues.pop());
 					}
 
-					//console.log("computed ", toReturn," for node ", destNode.getAttributeNS(null,"id"), " and attrs ", destNodeAttrs);
+					console.log("computed ", toReturn," for nodeAttrs ", destNodeAttrs.toString());
 
 					return toReturn;
 				});

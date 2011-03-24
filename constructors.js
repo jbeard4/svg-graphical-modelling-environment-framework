@@ -10,8 +10,8 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 	return {
 		ClassIcon : function(x,y){
 			var classIconG = svg.group();
-			var nameContainerRect = svg.rect(classIconG);
-			var nameText = svg.text(classIconG,x,y,"Class");
+			var nameContainerRect = svg.rect(classIconG,x,y,1,1);
+			var nameText = svg.text(classIconG,0,0,"Class");	//we really shouldn't set x and y here... maybe use different api?
 
 			nameContainerRect.id = "nameContainerRect";
 			nameText.id = "nameText";
@@ -25,39 +25,48 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			newAttributeButton.id = "newAttributeButton";
 
 			//create constraint
-			constraintGraph.push(
-				//nameContainerRect
+
+			var nameContainerRectWidthConstraint, attributeListRectHeightConstraint;	//these will be augmented later
+
+			nameContainerRectWidthConstraint = 
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"width"),
-					[cm.NodeAttrExpr(nameText,"width"),cm.NodeAttrExpr(attributeListRect,"width")],
+					cm.NodeAttrExpr(nameText,"width"),	//this gets augmented when we create a new attribute
 					Math.max
-				),
-				cm.Constraint(
-					cm.NodeAttr(nameContainerRect,"x"),
-					cm.NodeAttrExpr(nameText,"x")
-				),
-				cm.Constraint(
-					cm.NodeAttr(nameContainerRect,"y"),
-					cm.NodeAttrExpr(nameText,"y")
-				),
+				);
+
+			constraintGraph.push(
+				//nameContainerRect
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"height"),
 					cm.NodeAttrExpr(nameText,"height")
 				),
 
+				nameContainerRectWidthConstraint,
+
+				//nameText
+				cm.Constraint(
+					cm.NodeAttr(nameText,"x"),
+					cm.NodeAttrExpr(nameContainerRect,"x")		//TODO: this should be centered - fn of width and x
+				),
+				cm.Constraint(
+					cm.NodeAttr(nameText,"y"),
+					cm.NodeAttrExpr(nameContainerRect,"y")
+				),
+				
+
 				//attributeListRect
 				cm.Constraint(
 					cm.NodeAttr(attributeListRect,"width"),
-					cm.NodeAttrExpr(nameText,"width"),
-					Math.max
+					cm.NodeAttrExpr(nameContainerRect,"width")
 				),
 				cm.Constraint(
 					cm.NodeAttr(attributeListRect,"y"),
-					cm.NodeAttrExpr(nameText,["y","height"],cm.sum)
+					cm.NodeAttrExpr(nameContainerRect,["y","height"],cm.sum)
 				),
 				cm.Constraint(
 					cm.NodeAttr(attributeListRect,"x"),
-					cm.NodeAttrExpr(nameText,"x")
+					cm.NodeAttrExpr(nameContainerRect,"x")
 				),
 
 				//newAttributeButton 
@@ -121,35 +130,22 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				//if they don't exist, create them
 				//otherwise, append this guy's width/height
 
-				var sourceNodeConstraints = constraintGraph.filter(function(constraint){
-					return constraint.source.node === attributeListRect
-				});
+				nameContainerRectWidthConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"width"));
 
-				var sourceNodeWidthConstraint = sourceNodeConstraints.filter(function(constraint){
-					return constraint.source.attr === "width";
-				}).pop();
-
-				var sourceNodeHeightConstraint = sourceNodeConstraints.filter(function(constraint){
-					return constraint.source.attr === "height";
-				}).pop();
-
-				sourceNodeWidthConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"width"));
-
-				//debugger;
-
-				if(!sourceNodeHeightConstraint){
+				if(!attributeListRectHeightConstraint){
 					//create new constraint
-					constraintGraph.push(
+					attributeListRectHeightConstraint = 
 						cm.Constraint(
 							cm.NodeAttr(attributeListRect,"height"),
 							cm.NodeAttrExpr(newAttribute,"height"),
 							cm.sum
-						)
-					)
+						);
+
+					constraintGraph.push(attributeListRectHeightConstraint);
 				}else{
 				
 					//modify existing constraint
-					sourceNodeHeightConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"height"));
+					attributeListRectHeightConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"height"));
 				}
 				
 
@@ -157,18 +153,33 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				//if there are no attributes, then constraint is created pointing to name text
 				//otherwise, constraint is created pointing to the last attribute
 				//FIXME: this is not quite correct, though. we want to center the text, but we want the attributes to be left-justified. so we need to basically set the first attribute to the left edge of the other bound box....
-				var targetNode = !attributes.length ? nameText : attributes[attributes.length-1];
 
-				constraintGraph.push(
-					cm.Constraint(
-						cm.NodeAttr(newAttribute,"y"),
-						cm.NodeAttrExpr(targetNode,["y","height"],cm.sum)
-					),
-					cm.Constraint(
-						cm.NodeAttr(newAttribute,"x"),
-						cm.NodeAttrExpr(targetNode,"x")
-					)
-				);
+				if(attributes.length){
+					var prevAttribute = attributes[attributes.length-1];
+
+					constraintGraph.push(
+						cm.Constraint(
+							cm.NodeAttr(newAttribute,"y"),
+							cm.NodeAttrExpr(prevAttribute,["y","height"],cm.sum)
+						),
+						cm.Constraint(
+							cm.NodeAttr(newAttribute,"x"),
+							cm.NodeAttrExpr(prevAttribute,"x")
+						)
+					);
+				}else{
+					constraintGraph.push(
+						cm.Constraint(
+							cm.NodeAttr(newAttribute,"y"),
+							cm.NodeAttrExpr(attributeListRect,"y")
+						),
+						cm.Constraint(
+							cm.NodeAttr(newAttribute,"x"),
+							cm.NodeAttrExpr(attributeListRect,"x")
+						)
+					);
+				}
+
 
 				attributes.push(newAttribute);
 				
