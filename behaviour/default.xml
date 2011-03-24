@@ -43,12 +43,13 @@
 		</transition>
 
 		<transition event="mousedown" target="dragging"
-			cond="_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
+			cond="!(_event.data.domEvent.ctrlKey) &amp;&amp;
+				_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
 		</transition>
 
 	</state>
 
-	<state id="drawing_curve" initial="before_mouseover_drop_target">
+	<state id="drawing_curve" initial="before_mouseover_arrow_target">
 		<datamodel>
 			<data id="curveBeingDrawn"/>
 		</datamodel>
@@ -68,9 +69,9 @@
 			</script>
 		</transition>
 
-		<state id="before_mouseover_drop_target">
+		<state id="before_mouseover_arrow_target">
 
-			<transition target="after_mouseover_drop_target" event="mouseover"
+			<transition target="after_mouseover_arrow_target" event="mouseover"
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
 				<script>
 					//snap to target
@@ -89,11 +90,11 @@
 
 		</state>
 
-		<state id="after_mouseover_drop_target">
+		<state id="after_mouseover_arrow_target">
 			<!-- TODO: probably want to add a style change to the drop target -->
 
 			<!-- TODO: make sure that he's the same target before returning? -->
-			<transition target="before_mouseover_drop_target" event="mouseout"
+			<transition target="before_mouseover_arrow_target" event="mouseout"
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
 				<script>
 					//rollback target
@@ -122,10 +123,11 @@
 		</transition>
 	</state>
 
-	<state id="dragging">
+	<state id="dragging" initial="before_mouseover_drop_target">
 		<datamodel>
 			<data id="draggingEntity"/>
 			<data id="draggingRect"/>
+			<data id="dropTarget"/>
 		</datamodel>
 
 		<onentry>
@@ -161,7 +163,6 @@
 		</onexit>
 
 
-		<transition event="mouseup" target="idle"/>
 
 		<!-- no target: this is a static reaction (targetless transition in SCXML parlance) -->
 		<transition event="mousemove">
@@ -171,6 +172,46 @@
 			</script>
 			<assign location="eventStamp" expr="_event.data.domEvent"/>
 		</transition>
+
+		<state id="before_mouseover_drop_target">
+			<onentry>	
+				<log expr="'before_mouseover_drop_target'"/>
+			</onentry>
+	
+			<transition target="after_mouseover_drop_target" event="mouseover"
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.DROP_TARGET]
+					&amp;&amp; dropTarget !== draggingEntity">
+				<assign location="dropTarget" expr="_event.data.currentTarget"/>
+			</transition>
+
+			<transition event="mouseup" target="idle"/>
+		</state>
+
+		<state id="after_mouseover_drop_target">
+			<onentry>	
+				<log expr="'before_mouseover_drop_target'"/>
+				<script>
+					dropTarget.setHighlight();
+				</script>
+			</onentry>
+
+			<onexit>
+				<script>
+					dropTarget.unsetHighlight();
+				</script>
+			</onexit>
+
+			<transition target="before_mouseover_drop_target" event="mouseout"
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.DROP_TARGET]">
+			</transition>
+
+			<transition event="mouseup" target="idle">
+				<script>
+					//set up constraint relationship
+					dropTarget.dropShape(draggingEntity);
+				</script>
+			</transition>
+		</state>
 	</state>
 
 </scxml>

@@ -34,3 +34,7 @@ line {
 g.pressed rect {
 	fill : red;
 }
+
+.highlighted {
+	stroke : blue;
+}

@@ -219,14 +219,22 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		},
 
 		PackageIcon : function(x,y){
+
+			var PACKAGE_MIN_WIDTH = 100, 
+				PACKAGE_MIN_HEIGHT = 100,
+				PACKAGE_LEFT_PADDING = 10,
+				PACKAGE_RIGHT_PADDING = 10,
+				PACKAGE_TOP_PADDING = 10,
+				PACKAGE_BOTTOM_PADDING = 10; 
+
 			var icon = svg.group();
 			var nameContainerRect = svg.rect(icon,0,0,1,1);
-			var nameText = svg.text(icon,x,y,"Package");
+			var nameText = svg.text(icon,0,0,"Package");
 
 			nameContainerRect.id = "nameContainerRect";
 			nameText.id = "nameText";
 
-			var classContainerRect = svg.rect(icon,0,0,100,100);	//set an initial height
+			var classContainerRect = svg.rect(icon,x,y,PACKAGE_MIN_WIDTH,PACKAGE_MIN_HEIGHT);	//set an initial height
 			classContainerRect.id = "classContainerRect";
 
 			//create constraint
@@ -242,23 +250,25 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					cm.NodeAttrExpr(nameText,"width")
 				),
 				cm.Constraint(
-					cm.NodeAttr(nameContainerRect,"x"),
-					cm.NodeAttrExpr(nameText,"x")
+					cm.NodeAttr(nameText,"x"),
+					cm.NodeAttrExpr(nameContainerRect,"x")
 				),
 				cm.Constraint(
-					cm.NodeAttr(nameContainerRect,"y"),
-					cm.NodeAttrExpr(nameText,"y")
+					cm.NodeAttr(nameText,"y"),
+					cm.NodeAttrExpr(nameContainerRect,"y")
 				),
 				
 
-				//classContainerRect
 				cm.Constraint(
-					cm.NodeAttr(classContainerRect,"y"),
-					cm.NodeAttrExpr(nameContainerRect,["y","height"],cm.sum)
+					cm.NodeAttr(nameContainerRect,"y"),
+					[cm.NodeAttrExpr(classContainerRect,"y"),cm.NodeAttrExpr(nameContainerRect,"height")],
+					function(nameContainerRectY,nameTextHeight){
+						return nameContainerRectY - nameTextHeight;
+					}
 				),
 				cm.Constraint(
-					cm.NodeAttr(classContainerRect,"x"),
-					cm.NodeAttrExpr(nameContainerRect,"x")
+					cm.NodeAttr(nameContainerRect,"x"),
+					cm.NodeAttrExpr(classContainerRect,"x")
 				)
 
 			);
@@ -270,7 +280,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			};
 
 			classContainerRect.behaviours = {
-				DROP_SOURCE : true
+				DROP_TARGET : true
 			};
 
 			//here we hook up appropriate events to elements with default behaviour
@@ -292,6 +302,108 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classContainerRect})
 				},false);
 			});
+
+			//FIXME: I think I really shouldn't be adding this type of stuff directly to DOM objects...
+			classContainerRect.setHighlight = function(){
+				$(classContainerRect).addClass("highlighted");
+			}
+
+			classContainerRect.unsetHighlight = function(){
+				$(classContainerRect).removeClass("highlighted");
+			}
+
+			var classContainerRectXConstraint,
+				classContainerRectYConstraint,
+				classContainerRectWidthConstraint,
+				classContainerRectHeightConstraint;
+
+			var classContainerRectChildren = [];	//TODO: we could encode this in DOM
+
+			classContainerRect.dropShape = function(shape){
+
+				classContainerRectChildren.push(classContainerRectChildren); 
+
+				//furthermore, move stuff to be children of the group
+				shape.parentNode.removeChild(shape);
+
+				//TODO: we may want a separate group just for these children
+				//TODO: we may also need to do some matrix normalization
+				icon.appendChild(shape);	
+
+				//containment relationship... for all of his targets
+				//minx, miny for all shapes he contains
+				//maxx, maxy for all shapes he contains
+				//debugger;
+				if(!classContainerRectXConstraint){
+					classContainerRectXConstraint =
+						cm.Constraint(
+							cm.NodeAttr(classContainerRect,"x"),
+							cm.NodeAttrExpr(shape,"x"),
+							Math.min
+						);
+
+					classContainerRectYConstraint =
+						cm.Constraint(
+							cm.NodeAttr(classContainerRect,"y"),
+							cm.NodeAttrExpr(shape,"y"),
+							Math.min
+						);
+
+					classContainerRectWidthConstraint =
+						cm.Constraint(
+							cm.NodeAttr(classContainerRect,"width"),
+							[cm.NodeAttrExpr(classContainerRect,"x"),
+								cm.NodeAttrExpr(shape,["x","width"],cm.sum)],
+							function(classContainerRectX){
+								//TODO: read arbitrary arguments for second parameter
+
+								var args = Array.prototype.slice.call(arguments);
+								args = args.slice(1);
+								var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
+								var rightX = Math.max.apply(this,rightXArgs); 
+
+								return rightX >= PACKAGE_MIN_WIDTH ? rightX : PACKAGE_MIN_WIDTH; 
+							}
+						);
+				
+					classContainerRectHeightConstraint = 
+						cm.Constraint(
+							cm.NodeAttr(classContainerRect,"height"),
+							[cm.NodeAttrExpr(classContainerRect,"y"),
+								cm.NodeAttrExpr(shape,["y","height"],cm.sum)],
+							function(classContainerRectY,shapeBottomY){
+								//TODO: read arbitrary arguments for second parameter
+								var args = Array.prototype.slice.call(arguments);
+								args = args.slice(1);
+								var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
+								var bottomY = Math.max.apply(this,bottomYArgs); 
+
+								return bottomY  >= PACKAGE_MIN_HEIGHT ? bottomY : PACKAGE_MIN_HEIGHT ; 
+							}
+						);
+						cm.Constraint(
+							cm.NodeAttr(classContainerRect,"height"),
+							cm.NodeAttrExpr(shape,["y","height"],cm.sum),
+							Math.max
+						);
+
+					//push
+					constraintGraph.push(classContainerRectXConstraint,
+								classContainerRectYConstraint,
+								classContainerRectWidthConstraint,
+								classContainerRectHeightConstraint);
+				}else{
+					classContainerRectXConstraint.dest.push(cm.NodeAttrExpr(shape,"x"));
+					classContainerRectYConstraint.dest.push(cm.NodeAttrExpr(shape,"y"));
+					classContainerRectWidthConstraint.dest.push(cm.NodeAttrExpr(shape,["x","width"],cm.sum));
+					classContainerRectHeightConstraint.dest.push(cm.NodeAttrExpr(shape,["y","height"],cm.sum));
+				}
+
+				requestLayout();
+			}
+
+			//TODO: undrop shape somehow
+			//rollback all constraint relationships, etc.
 		
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 
