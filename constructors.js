@@ -317,8 +317,16 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 					requestLayout();
 				},
-				rollback : function(){		//here aliased to remove, but in polyline or path, may not be
-					this.remove();
+				rollback : function(){
+					//here using targetConstraintX/targetConstraintY to encode state 
+					if(targetConstraintX && targetConstraintY){
+						[targetConstraintX,targetConstraintY].forEach(function(c){
+							constraintGraph.splice(constraintGraph.indexOf(c),1);
+						});
+						targetConstraintX = targetConstraintY = null;
+					}else{ 
+						this.remove();
+					}
 				},	
 				getNumberOfControlPoints : function(){
 					return 0;
@@ -330,10 +338,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					//remove constraints
 					[sourceConstraintX,sourceConstraintY,targetConstraintX,targetConstraintY].forEach(function(c){
 						constraintGraph.splice(constraintGraph.indexOf(c),1);
-						constraintGraph.splice(constraintGraph.indexOf(c),1);
-						constraintGraph.splice(constraintGraph.indexOf(c),1);	//FIXME: make sure targetConstraint is set?
-						constraintGraph.splice(constraintGraph.indexOf(c),1);	//FIXME: make sure targetConstraint is set?
-					})
+					});
 
 					requestLayout();
 				}

@@ -68,18 +68,24 @@
 			</script>
 		</transition>
 
-		<transition event="mousemove">
-			<script>
-				//update the arrow head
-				//two-pixel off-set to prevent arrow from stealing events
-				curveBeingDrawn.setEndPoint(_event.data.domEvent.clientX-2,_event.data.domEvent.clientY-2);
-			</script>
-		</transition>
-
 		<state id="before_mouseover_drop_target">
 
 			<transition target="after_mouseover_drop_target" event="mouseover"
-				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]"/>
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
+				<script>
+					//snap to target
+					curveBeingDrawn.setTarget(_event.data.currentTarget);
+				</script>
+			</transition>
+
+			<transition event="mousemove">
+				<script>
+					//update the arrow head
+					//two-pixel off-set to prevent arrow from stealing events
+					curveBeingDrawn.setEndPoint(_event.data.domEvent.clientX-2,_event.data.domEvent.clientY-2);
+				</script>
+			</transition>
+
 
 		</state>
 
@@ -88,16 +94,14 @@
 
 			<!-- TODO: make sure that he's the same target before returning? -->
 			<transition target="before_mouseover_drop_target" event="mouseout"
-				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]"/>
-
-			<transition event="mousedown" target="idle">
-			
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
 				<script>
-					//set the arrow target
-					curveBeingDrawn.setTarget(_event.data.currentTarget);
+					//rollback target
+					curveBeingDrawn.rollback();
 				</script>
-				
 			</transition>
+
+			<transition event="mousedown" target="idle"/>
 
 		</state>
 	</state>
