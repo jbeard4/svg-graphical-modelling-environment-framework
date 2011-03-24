@@ -6,10 +6,31 @@
 
 function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer){
 
-	//TODO: change the parameter names
-	function setupDropTarget(classContainerRect,icon,spacing){
+	
+
+	function setupHighlightable(e){
+
+		e.behaviours = e.behaviours || {};
+
+		e.behaviours.HIGHLIGHTABLE = "true";
+
+		//expose the interface
+		e.setHighlight = function(){
+			$(e).addClass("highlighted");
+		}
+
+		e.unsetHighlight = function(){
+			$(e).removeClass("highlighted");
+		}
 		
-		//setup behaviour tag
+	}
+
+	//TODO: change the parameter names
+	//TODO: make the constraint setup function more flexible?
+	function setupDropTarget(classContainerRect,icon,spacing,setupWrapConstraints){
+
+		setupHighlightable(classContainerRect);	//drop target must be highlightable
+
 		classContainerRect.behaviours.DROP_TARGET = true;
 
 		//setup event listeners
@@ -21,15 +42,6 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classContainerRect})
 			},false);
 		});
-
-		//expose the interface
-		classContainerRect.setHighlight = function(){
-			$(classContainerRect).addClass("highlighted");
-		}
-
-		classContainerRect.unsetHighlight = function(){
-			$(classContainerRect).removeClass("highlighted");
-		}
 
 		//make these things public properties... make them addressable as "dropconstraints"
 
@@ -98,70 +110,72 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//minx, miny for all shapes he contains
 			//maxx, maxy for all shapes he contains
 			//debugger;
-			if(!icon.classContainerRectXConstraint){
-				icon.classContainerRectXConstraint =
-					cm.Constraint(
-						cm.NodeAttr(this,"x"),
-						cm.NodeAttrExpr(shape,"x",cm.dec(spacing.leftPadding)),
-						Math.min
-					);
+			if(setupWrapConstraints){
+				if(!icon.classContainerRectXConstraint){
+					icon.classContainerRectXConstraint =
+						cm.Constraint(
+							cm.NodeAttr(this,"x"),
+							cm.NodeAttrExpr(shape,"x",cm.dec(spacing.leftPadding)),
+							Math.min
+						);
 
-				icon.classContainerRectYConstraint =
-					cm.Constraint(
-						cm.NodeAttr(this,"y"),
-						cm.NodeAttrExpr(shape,"y",cm.dec(spacing.topPadding)),
-						Math.min
-					);
+					icon.classContainerRectYConstraint =
+						cm.Constraint(
+							cm.NodeAttr(this,"y"),
+							cm.NodeAttrExpr(shape,"y",cm.dec(spacing.topPadding)),
+							Math.min
+						);
 
-				icon.classContainerRectWidthConstraint =
-					cm.Constraint(
-						cm.NodeAttr(this,"width"),
-						[cm.NodeAttrExpr(this,"x"),
-							cm.NodeAttrExpr(shape,["x","width"],cm.sum)],
-						function(classContainerRectX){
-							//TODO: read arbitrary arguments for second parameter
+					icon.classContainerRectWidthConstraint =
+						cm.Constraint(
+							cm.NodeAttr(this,"width"),
+							[cm.NodeAttrExpr(this,"x"),
+								cm.NodeAttrExpr(shape,["x","width"],cm.sum)],
+							function(classContainerRectX){
+								//TODO: read arbitrary arguments for second parameter
 
-							var args = Array.prototype.slice.call(arguments);
-							args = args.slice(1);
-							var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
-							var rightX = Math.max.apply(this,rightXArgs); 
-							var rightXPlusPadding = rightX + spacing.rightPadding; 
-							return rightXPlusPadding >= spacing.minWidth ? rightXPlusPadding : spacing.minWidth; 
-						}
-					);
-			
-				icon.classContainerRectHeightConstraint = 
-					cm.Constraint(
-						cm.NodeAttr(this,"height"),
-						[cm.NodeAttrExpr(this,"y"),
-							cm.NodeAttrExpr(shape,["y","height"],cm.sum)],
-						function(classContainerRectY,shapeBottomY){
-							//TODO: read arbitrary arguments for second parameter
-							var args = Array.prototype.slice.call(arguments);
-							args = args.slice(1);
-							var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
-							var bottomY = Math.max.apply(this,bottomYArgs); 
-							var bottomYPlusPadding = bottomY + spacing.leftPadding; 
+								var args = Array.prototype.slice.call(arguments);
+								args = args.slice(1);
+								var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
+								var rightX = Math.max.apply(this,rightXArgs); 
+								var rightXPlusPadding = rightX + spacing.rightPadding; 
+								return rightXPlusPadding >= spacing.minWidth ? rightXPlusPadding : spacing.minWidth; 
+							}
+						);
+				
+					icon.classContainerRectHeightConstraint = 
+						cm.Constraint(
+							cm.NodeAttr(this,"height"),
+							[cm.NodeAttrExpr(this,"y"),
+								cm.NodeAttrExpr(shape,["y","height"],cm.sum)],
+							function(classContainerRectY,shapeBottomY){
+								//TODO: read arbitrary arguments for second parameter
+								var args = Array.prototype.slice.call(arguments);
+								args = args.slice(1);
+								var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
+								var bottomY = Math.max.apply(this,bottomYArgs); 
+								var bottomYPlusPadding = bottomY + spacing.leftPadding; 
 
-							return bottomYPlusPadding  >= spacing.minHeight ? bottomYPlusPadding : spacing.minHeight ; 
-						}
-					);
-					cm.Constraint(
-						cm.NodeAttr(this,"height"),
-						cm.NodeAttrExpr(shape,["y","height"],cm.sum),
-						Math.max
-					);
+								return bottomYPlusPadding  >= spacing.minHeight ? bottomYPlusPadding : spacing.minHeight ; 
+							}
+						);
+						cm.Constraint(
+							cm.NodeAttr(this,"height"),
+							cm.NodeAttrExpr(shape,["y","height"],cm.sum),
+							Math.max
+						);
 
-				//push
-				constraintGraph.push(icon.classContainerRectXConstraint,
-							icon.classContainerRectYConstraint,
-							icon.classContainerRectWidthConstraint,
-							icon.classContainerRectHeightConstraint);
-			}else{
-				icon.classContainerRectXConstraint.dest.push(cm.NodeAttrExpr(shape,"x"));
-				icon.classContainerRectYConstraint.dest.push(cm.NodeAttrExpr(shape,"y"));
-				icon.classContainerRectWidthConstraint.dest.push(cm.NodeAttrExpr(shape,["x","width"],cm.sum));
-				icon.classContainerRectHeightConstraint.dest.push(cm.NodeAttrExpr(shape,["y","height"],cm.sum));
+					//push
+					constraintGraph.push(icon.classContainerRectXConstraint,
+								icon.classContainerRectYConstraint,
+								icon.classContainerRectWidthConstraint,
+								icon.classContainerRectHeightConstraint);
+				}else{
+					icon.classContainerRectXConstraint.dest.push(cm.NodeAttrExpr(shape,"x"));
+					icon.classContainerRectYConstraint.dest.push(cm.NodeAttrExpr(shape,"y"));
+					icon.classContainerRectWidthConstraint.dest.push(cm.NodeAttrExpr(shape,["x","width"],cm.sum));
+					icon.classContainerRectHeightConstraint.dest.push(cm.NodeAttrExpr(shape,["y","height"],cm.sum));
+				}
 			}
 
 			requestLayout();
@@ -172,12 +186,38 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		}
 	}
 
+	function setupArrowSource(){
+		//TODO	
+	}
+
+	function setupArrowTarget(){
+		//TODO	
+
+	}
+
+	function setupCreator(){
+		//TODO	
+
+	}
+
+	function setupDraggable(){
+		//TODO	
+	
+	}
+
+	function setupCurvable(){
+		//TODO	
+	
+	}
+
 	function removeFromList(element,list){
 		return list.splice(list.indexOf(element),1);
 	}
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
 	return {
+		setupDropTarget : setupDropTarget,
+		//TODO: the others...
 		ClassIcon : function(x,y){
 			
 			var icon = svg.group(nodeLayer);
@@ -427,10 +467,6 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				ARROW_TARGET : true
 			};
 
-			classContainerRect.behaviours = {
-				DROP_TARGET : true
-			};
-
 			//here we hook up appropriate events to elements with default behaviour
 			//what are appropriate events? we are defining these as we go...
 
@@ -448,7 +484,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 							leftPadding:PACKAGE_LEFT_PADDING,
 							rightPadding:PACKAGE_RIGHT_PADDING,
 							minWidth:PACKAGE_MIN_WIDTH,
-							minHeight:PACKAGE_MIN_HEIGHT});
+							minHeight:PACKAGE_MIN_HEIGHT},true);
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 

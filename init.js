@@ -1,13 +1,12 @@
 function init(evt) {     
-	Node.prototype.behaviours = {};
 
 	var svgRoot = evt.target.ownerDocument.documentElement;
-
-	//var rootRectDropTarget = svg.rect(0,0,"100%","100%",{fill:"white",stroke:"none"});
 
 	var svg = new $.svg._wrapperClass(         
 		svgRoot,
 		{clientWidth: "100%", clientHeight: "100%"});     
+
+	var rootRectDropTarget = svg.rect(0,0,"100%","100%",{fill:"white",stroke:"none"});
 
 	var nodeLayer = svg.group("$node-layer");
 	var edgeLayer = svg.group("$edge-layer");
@@ -28,6 +27,17 @@ function init(evt) {
 	compiledStatechartInstance = new StatechartExecutionContext(); 
 
 	var constructors = setupConstructors(compiledStatechartInstance,constraintModule,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer); 
+
+	//setup canvas as a drop target
+
+	constructors.setupDropTarget(rootRectDropTarget,
+						svgRoot,
+						{topPadding:10,
+							bottomPadding:10,
+							leftPadding:10,
+							rightPadding:10,
+							minWidth:10,
+							minHeight:10});
 
 	//initialize
 	compiledStatechartInstance.initialize();
