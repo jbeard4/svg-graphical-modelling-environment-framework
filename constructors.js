@@ -126,11 +126,11 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				});
 
 				var sourceNodeWidthConstraint = sourceNodeConstraints.filter(function(constraint){
-					return constraint.source.attrs.indexOf("width") !== -1; 
+					return constraint.source.attr === "width";
 				}).pop();
 
 				var sourceNodeHeightConstraint = sourceNodeConstraints.filter(function(constraint){
-					return constraint.source.attrs.indexOf("height") !== -1; 
+					return constraint.source.attr === "height";
 				}).pop();
 
 				sourceNodeWidthConstraint.dest.push(cm.NodeAttrExpr(newAttribute,"width"));
