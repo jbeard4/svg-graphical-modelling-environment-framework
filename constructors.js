@@ -12,6 +12,25 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		}
 	}
 
+	function hookElementEventsToStatechart(element,events,stopPropagation){
+		events.forEach(function(eventName){
+			element.addEventListener(eventName,function(e){
+				e.preventDefault();
+
+				if(stopPropagation) e.stopPropagation();
+
+				//FIXME: this is interesting. in order to not conflict with drag-and-drop behaviour (parent has arrow target), we need to not stop event propagation. when generating the environment, we will need to determine the strict conditions that require us to stop event propagation, or not
+				//e.stopPropagation();	
+				defaultStatechartInstance[eventName]({domEvent:e,currentTarget:element})
+			},false)
+		})
+	}
+
+	function addArrowEditorBehaviour(){
+		//register event listener
+		//TODO
+	}
+
 	//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
 	var drawPathBehaviourAPI = {
 
@@ -256,15 +275,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 		classContainerRect.behaviours.DROP_TARGET = true;
 
-		//setup event listeners
-		["mouseover","mouseout"].forEach(function(eventName){
-			classContainerRect.addEventListener(eventName,function(e){
-				e.preventDefault();
-				//FIXME: this is interesting. in order to not conflict with drag-and-drop behaviour (parent has arrow target), we need to not stop event propagation. when generating the environment, we will need to determine the strict conditions that require us to stop event propagation, or not
-				//e.stopPropagation();	
-				defaultStatechartInstance[eventName]({domEvent:e,currentTarget:classContainerRect})
-			},false);
-		});
+		hookElementEventsToStatechart(classContainerRect,["mouseover","mouseout"],false);
 
 		//make these things public properties... make them addressable as "dropconstraints"
 
@@ -604,17 +615,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				ARROW_TARGET : true
 			};
 		
-			//add drag behaviour
-			["mousedown","mouseup","mousemove","mouseover","mouseout"].forEach(function(eventName){
-				//we call e.preventDefault for all of these events to prevent firefox from using its default dragging behaviour: 
-				//see https://bugzilla.mozilla.org/show_bug.cgi?id=525591#c4
-				//it may be the case that only certain events (md, mu, or mm) need to be canceled to prevent this behaviour
-				icon.addEventListener(eventName,function(e){
-					e.preventDefault();
-					e.stopPropagation();
-					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:icon})
-				},false);
-			});
+			hookElementEventsToStatechart(icon,["mousedown","mouseup","mousemove","mouseover","mouseout"],true);
 
 			requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 
@@ -692,13 +693,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//here we hook up appropriate events to elements with default behaviour
 			//what are appropriate events? we are defining these as we go...
 
-			["mousedown","mouseup","mousemove","mouseover","mouseout"].forEach(function(eventName){
-				icon.addEventListener(eventName,function(e){
-					e.preventDefault();
-					e.stopPropagation();
-					defaultStatechartInstance[eventName]({domEvent:e,currentTarget:icon})
-				},false);
-			});
+			hookElementEventsToStatechart(icon,["mousedown","mouseup","mousemove","mouseover","mouseout"],true);
 
 			setupDropTarget(classContainerRect,icon,
 						{topPadding:PACKAGE_TOP_PADDING,
