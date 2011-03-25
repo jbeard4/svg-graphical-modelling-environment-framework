@@ -501,8 +501,9 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//create the group and the path
 			//also the source... with the second drop?
 			//return the group
-			var line = svg.line(edgeLayer,x,y,x+1,y+1);
-			line.setAttributeNS(null,"class","edge");	//TODO: jquery-ify this statement
+			var p = svg.createPath();
+			var path = svg.path(edgeLayer,p.move(x,y).line(x+1,y+1));
+			path.setAttributeNS(null,"class","edge");	//TODO: jquery-ify this statement
 
 			var targetConstraintX,
 				targetConstraintY,
@@ -513,7 +514,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
  
 			originalSourceConstraintX = sourceConstraintX = 
 				cm.Constraint(
-					cm.NodeAttr(line,"$startX"),
+					cm.NodeAttr(path,"$startX"),
 					cm.NodeAttrExpr(source,"bbox"),
 					function(sourceBBox){
 						return sourceBBox.x + sourceBBox.width/2;
@@ -523,7 +524,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 			originalSourceConstraintY = sourceConstraintY = 
 				cm.Constraint(
-					cm.NodeAttr(line,"$startY"),
+					cm.NodeAttr(path,"$startY"),
 					cm.NodeAttrExpr(source,"bbox"),
 					function(sourceBBox){
 						return sourceBBox.y + sourceBBox.height/2;
@@ -536,9 +537,99 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			requestLayout();
 
 			return {
-				setEndPoint : function(x,y){
-					line.x2.baseVal.value = x;	 
-					line.y2.baseVal.value = y;
+
+				isPathEmpty : function (path){
+					return !path.pathSegList.numberOfItems>1;	//1, because a move counts as empty
+				},
+
+				willPathBeEmptyAfterRemovingNextPoint : function (path){
+					return path.pathSegList.numberOfItems==2;	
+				},
+
+				rollbackPoint : function (path){
+					path.pathSegList.removeItem(path.pathSegList.numberOfItems-2);
+				},
+
+				setEndPoint : function (x,y){
+					var segList = path.pathSegList;
+					var numItems = segList.numberOfItems;
+					var endSeg = segList.getItem(numItems-1);
+
+					endSeg.x = x;
+					endSeg.y = y;
+				},
+
+				createNewQuadraticSegment : function (x,y,x1,y1){
+					var n = path.createSVGPathSegCurvetoQuadraticAbs(x,y,x1,y1);
+					path.pathSegList.appendItem(n);
+
+					return n;
+				},
+
+				createNewLineSegment : function (x,y){
+					var n = path.createSVGPathSegLinetoAbs(x,y);
+					path.pathSegList.appendItem(n);
+					return n;
+				},
+
+				addControlPoint : function (x,y,mirror){
+					var segList = path.pathSegList;
+					var numItems = segList.numberOfItems;
+					var endSeg = segList.getItem(numItems-1);
+
+					//first item will be M, second item will be the initial path drawing segment
+					if(numItems > 1){
+						if(endSeg.x2 === undefined && endSeg.x1 === undefined){
+							//upgrade him to a quadratic
+							var newSeg = path.createSVGPathSegCurvetoQuadraticAbs(endSeg.x,endSeg.y,x,y);
+							segList.replaceItem(newSeg,numItems-1); 
+
+						}
+						else if(endSeg.x2 === undefined && endSeg.x1 !== undefined){
+							//upgrade him to a cubic
+							//var newSegX2 = x + 2*( endSeg.x1 - x );
+							//var newSegY2 = y + 2*( endSeg.y1 - y );
+							var newSeg = path.createSVGPathSegCurvetoCubicAbs(endSeg.x,endSeg.y,endSeg.x1,endSeg.y1,x,y);
+							segList.replaceItem(newSeg,numItems-1) 
+
+						}
+						else{
+							//TODO: throw error
+						}
+					}
+				},
+				setLastControlPoint : function(x,y,mirror){
+					//get the last control point
+					var segList = path.pathSegList;
+					var numItems = segList.numberOfItems;
+					var endSeg = segList.getItem(numItems-1);
+
+					var curX = endSeg.x, curY = endSeg.y;
+					var propX, propY;
+					if(endSeg.x2 !== undefined ){
+						propX = "x2";
+					}else if(endSeg.x1  !== undefined ){
+						propX = "x1";
+					} 
+
+					//debugger;
+					if(endSeg.y2  !== undefined ){
+						propY = "y2";
+					}else if(endSeg.y1  !== undefined ){
+						propY = "y1";
+					} 
+
+					//if(propX === undefined || propY === undefined) debugger;
+
+					if(mirror){
+						x = x + 2*(curX - x); 
+						y = y + 2*(curY - y);
+					}
+
+					//console.log("curX",curX,"curY",curY,"x",x,"y",y,"propX",propX,"propY",propY);
+
+					endSeg[propX] = x;
+					endSeg[propY] = y;
 				},
 				setTarget : function(target){
 
@@ -591,14 +682,14 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					//set up target constraints
 					targetConstraintX = 
 						cm.Constraint(
-							cm.NodeAttr(line,"$endX"),
+							cm.NodeAttr(path,"$endX"),
 							depList, 
 							getConstraintFunction("x",false)
 						);
 
 					targetConstraintY = 
 						cm.Constraint(
-							cm.NodeAttr(line,"$endY"),
+							cm.NodeAttr(path,"$endY"),
 							depList, 
 							getConstraintFunction("y",false)
 						);
@@ -606,7 +697,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					//set up new sourceConstraintX and sourceConstraintY
 					sourceConstraintX = 
 						cm.Constraint(
-							cm.NodeAttr(line,"$startX"),
+							cm.NodeAttr(path,"$startX"),
 							depList, 
 							getConstraintFunction("x",true)
 						);
@@ -614,7 +705,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 					sourceConstraintY = 
 						cm.Constraint(
-							cm.NodeAttr(line,"$startY"),
+							cm.NodeAttr(path,"$startY"),
 							depList, 
 							getConstraintFunction("y",true)
 						);
@@ -650,7 +741,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				},
 				remove : function(){
 					//remove self from dom
-					line.parentNode.removeChild(line);
+					path.parentNode.removeChild(path);
 					
 					//remove constraints
 					[sourceConstraintX,sourceConstraintY,targetConstraintX,targetConstraintY].forEach(function(c){
@@ -659,7 +750,9 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 					requestLayout();
 				}
+
 			}
+
 		},
 
 		RadioButtonGroup : function(x,y){
