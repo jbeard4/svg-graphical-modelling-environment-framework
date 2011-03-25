@@ -6,7 +6,255 @@
 
 function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer){
 
+	function merge(from,to){
+		for(var p in from){
+			if(from.hasOwnProperty(p)) to[p] = from[p];
+		}
+	}
+
 	
+	var drawPathBehaviourAPI = {
+		isPathEmpty : function (){
+			return !this.pathSegList.numberOfItems>1;	//1, because a move counts as empty
+		},
+
+		willPathBeEmptyAfterRemovingNextPoint : function (){
+			return this.pathSegList.numberOfItems==2;	
+		},
+
+		rollbackPoint : function (){
+			this.pathSegList.removeItem(this.pathSegList.numberOfItems-2);
+		},
+
+		setEndPoint : function (x,y){
+			var segList = this.pathSegList;
+			var numItems = segList.numberOfItems;
+			var endSeg = segList.getItem(numItems-1);
+
+			endSeg.x = x;
+			endSeg.y = y;
+		},
+
+		createNewQuadraticSegment : function (x,y,x1,y1){
+			var n = this.createSVGPathSegCurvetoQuadraticAbs(x,y,x1,y1);
+			this.pathSegList.appendItem(n);
+
+			return n;
+		},
+
+		createNewLineSegment : function (x,y){
+			var n = this.createSVGPathSegLinetoAbs(x,y);
+			this.pathSegList.appendItem(n);
+			return n;
+		},
+
+		addControlPoint : function (x,y,mirror){
+			var segList = this.pathSegList;
+			var numItems = segList.numberOfItems;
+			var endSeg = segList.getItem(numItems-1);
+
+			//first item will be M, second item will be the initial this drawing segment
+			if(numItems > 1){
+				if(endSeg.x2 === undefined && endSeg.x1 === undefined){
+					//upgrade him to a quadratic
+					var newSeg = this.createSVGPathSegCurvetoQuadraticAbs(endSeg.x,endSeg.y,x,y);
+					segList.replaceItem(newSeg,numItems-1); 
+
+				}
+				else if(endSeg.x2 === undefined && endSeg.x1 !== undefined){
+					//upgrade him to a cubic
+					//var newSegX2 = x + 2*( endSeg.x1 - x );
+					//var newSegY2 = y + 2*( endSeg.y1 - y );
+					var newSeg = this.createSVGPathSegCurvetoCubicAbs(endSeg.x,endSeg.y,endSeg.x1,endSeg.y1,x,y);
+					segList.replaceItem(newSeg,numItems-1) 
+
+				}
+				else{
+					//TODO: throw error
+				}
+			}
+		},
+		setLastControlPoint : function(x,y,mirror){
+			//get the last control point
+			var segList = this.pathSegList;
+			var numItems = segList.numberOfItems;
+			var endSeg = segList.getItem(numItems-1);
+
+			var curX = endSeg.x, curY = endSeg.y;
+			var propX, propY;
+			if(endSeg.x2 !== undefined ){
+				propX = "x2";
+			}else if(endSeg.x1  !== undefined ){
+				propX = "x1";
+			} 
+
+			//debugger;
+			if(endSeg.y2  !== undefined ){
+				propY = "y2";
+			}else if(endSeg.y1  !== undefined ){
+				propY = "y1";
+			} 
+
+			//if(propX === undefined || propY === undefined) debugger;
+
+			if(mirror){
+				x = x + 2*(curX - x); 
+				y = y + 2*(curY - y);
+			}
+
+			//console.log("curX",curX,"curY",curY,"x",x,"y",y,"propX",propX,"propY",propY);
+
+			endSeg[propX] = x;
+			endSeg[propY] = y;
+		},
+		setTarget : function(target){
+
+			//set up the constraint graph for the target
+			function getConstraintFunction(xOrY,isSource){
+				return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
+					var x0 = fromX + fromWidth/2;
+					var y0 = fromY + fromHeight/2;
+
+					var x1 = toX + toWidth/2;
+					var y1 = toY + toHeight/2;
+
+
+					var p1 = new Point2D(x0,y0),
+						p2 = new Point2D(x1,y1);
+
+					var r1,r2;
+					if(isSource){
+						r1 = new Point2D(fromX,fromY);
+						r2 = new Point2D(fromX + fromWidth, fromY + fromHeight);
+					}else{
+						r1 = new Point2D(toX,toY);
+						r2 = new Point2D(toX + toWidth, toY + toHeight);
+					}
+
+					var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
+
+					var point = inter.points.pop();
+
+					return point && point[xOrY];	//if there's no intersection, we might get back undefined
+				}
+			}
+
+
+			//remove and update sourceConstraintX and sourceConstraintY to avoid arrow occlusion 
+			[this.sourceConstraintX,this.sourceConstraintY].forEach(function(c){
+				constraintGraph.splice(constraintGraph.indexOf(c),1);
+			});
+
+
+			var depList = [cm.NodeAttrExpr(this.source,"x"),
+						cm.NodeAttrExpr(this.source,"y"),
+						cm.NodeAttrExpr(this.source,"width"),
+						cm.NodeAttrExpr(this.source,"height"),
+						cm.NodeAttrExpr(target,"x"),
+						cm.NodeAttrExpr(target,"y"),
+						cm.NodeAttrExpr(target,"width"),
+						cm.NodeAttrExpr(target,"height")];
+			
+			//set up target constraints
+			this.targetConstraintX = 
+				cm.Constraint(
+					cm.NodeAttr(this,"$endX"),
+					depList, 
+					getConstraintFunction("x",false)
+				);
+
+			this.targetConstraintY = 
+				cm.Constraint(
+					cm.NodeAttr(this,"$endY"),
+					depList, 
+					getConstraintFunction("y",false)
+				);
+		
+			//set up new sourceConstraintX and sourceConstraintY
+			this.sourceConstraintX = 
+				cm.Constraint(
+					cm.NodeAttr(this,"$startX"),
+					depList, 
+					getConstraintFunction("x",true)
+				);
+
+
+			this.sourceConstraintY = 
+				cm.Constraint(
+					cm.NodeAttr(this,"$startY"),
+					depList, 
+					getConstraintFunction("y",true)
+				);
+
+			constraintGraph.push(this.sourceConstraintX,
+						this.sourceConstraintY,
+						this.targetConstraintX,
+						this.targetConstraintY);
+
+		},
+		rollback : function(){
+			//here using targetConstraintX/targetConstraintY to encode state 
+			if(this.targetConstraintX && this.targetConstraintY){
+				[this.sourceConstraintX,this.sourceConstraintY,this.targetConstraintX,this.targetConstraintY].forEach(function(c){
+					constraintGraph.splice(constraintGraph.indexOf(c),1);
+				});
+
+				this.sourceConstraintX = this.originalSourceConstraintX;
+				this.sourceConstraintY = this.originalSourceConstraintY;
+
+				constraintGraph.push(this.sourceConstraintX,this.sourceConstraintY);  
+
+				this.targetConstraintX = this.targetConstraintY = null;
+			
+				requestLayout();
+			}else{ 
+				this.remove();
+			}
+		},	
+		getNumberOfControlPoints : function(){
+			return 0;
+		},
+		remove : function(){
+			//remove self from dom
+			this.parentNode.removeChild(this);
+			
+			//remove constraints
+			[this.sourceConstraintX,this.sourceConstraintY,this.targetConstraintX,this.targetConstraintY].forEach(function(c){
+				constraintGraph.splice(constraintGraph.indexOf(c),1);
+			});
+
+			requestLayout();
+		}
+	}
+
+	function setupDrawPath(source){
+
+		this.source = source;
+
+		this.originalSourceConstraintX = this.sourceConstraintX = 
+			cm.Constraint(
+				cm.NodeAttr(this,"$startX"),
+				cm.NodeAttrExpr(this.source,"bbox"),
+				function(sourceBBox){
+					return sourceBBox.x + sourceBBox.width/2;
+				}
+
+			);
+
+		this.originalSourceConstraintY = this.sourceConstraintY = 
+			cm.Constraint(
+				cm.NodeAttr(this,"$startY"),
+				cm.NodeAttrExpr(this.source,"bbox"),
+				function(sourceBBox){
+					return sourceBBox.y + sourceBBox.height/2;
+				}
+
+			);
+
+		constraintGraph.push(this.sourceConstraintX,this.sourceConstraintY);
+
+		merge(drawPathBehaviourAPI,this); 
+	}
 
 	function setupHighlightable(e){
 
@@ -505,254 +753,10 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			var path = svg.path(edgeLayer,p.move(x,y).line(x+1,y+1));
 			path.setAttributeNS(null,"class","edge");	//TODO: jquery-ify this statement
 
-			var targetConstraintX,
-				targetConstraintY,
-				sourceConstraintX,
-				sourceConstraintY,
-				originalSourceConstraintX,
-				originalSourceConstraintY;
- 
-			originalSourceConstraintX = sourceConstraintX = 
-				cm.Constraint(
-					cm.NodeAttr(path,"$startX"),
-					cm.NodeAttrExpr(source,"bbox"),
-					function(sourceBBox){
-						return sourceBBox.x + sourceBBox.width/2;
-					}
+			//set up behaviour interface and data
+			setupDrawPath.call(path,source);
 
-				);
-
-			originalSourceConstraintY = sourceConstraintY = 
-				cm.Constraint(
-					cm.NodeAttr(path,"$startY"),
-					cm.NodeAttrExpr(source,"bbox"),
-					function(sourceBBox){
-						return sourceBBox.y + sourceBBox.height/2;
-					}
-
-				);
-
-			constraintGraph.push(sourceConstraintX,sourceConstraintY);
-
-			requestLayout();
-
-			return {
-
-				isPathEmpty : function (path){
-					return !path.pathSegList.numberOfItems>1;	//1, because a move counts as empty
-				},
-
-				willPathBeEmptyAfterRemovingNextPoint : function (path){
-					return path.pathSegList.numberOfItems==2;	
-				},
-
-				rollbackPoint : function (path){
-					path.pathSegList.removeItem(path.pathSegList.numberOfItems-2);
-				},
-
-				setEndPoint : function (x,y){
-					var segList = path.pathSegList;
-					var numItems = segList.numberOfItems;
-					var endSeg = segList.getItem(numItems-1);
-
-					endSeg.x = x;
-					endSeg.y = y;
-				},
-
-				createNewQuadraticSegment : function (x,y,x1,y1){
-					var n = path.createSVGPathSegCurvetoQuadraticAbs(x,y,x1,y1);
-					path.pathSegList.appendItem(n);
-
-					return n;
-				},
-
-				createNewLineSegment : function (x,y){
-					var n = path.createSVGPathSegLinetoAbs(x,y);
-					path.pathSegList.appendItem(n);
-					return n;
-				},
-
-				addControlPoint : function (x,y,mirror){
-					var segList = path.pathSegList;
-					var numItems = segList.numberOfItems;
-					var endSeg = segList.getItem(numItems-1);
-
-					//first item will be M, second item will be the initial path drawing segment
-					if(numItems > 1){
-						if(endSeg.x2 === undefined && endSeg.x1 === undefined){
-							//upgrade him to a quadratic
-							var newSeg = path.createSVGPathSegCurvetoQuadraticAbs(endSeg.x,endSeg.y,x,y);
-							segList.replaceItem(newSeg,numItems-1); 
-
-						}
-						else if(endSeg.x2 === undefined && endSeg.x1 !== undefined){
-							//upgrade him to a cubic
-							//var newSegX2 = x + 2*( endSeg.x1 - x );
-							//var newSegY2 = y + 2*( endSeg.y1 - y );
-							var newSeg = path.createSVGPathSegCurvetoCubicAbs(endSeg.x,endSeg.y,endSeg.x1,endSeg.y1,x,y);
-							segList.replaceItem(newSeg,numItems-1) 
-
-						}
-						else{
-							//TODO: throw error
-						}
-					}
-				},
-				setLastControlPoint : function(x,y,mirror){
-					//get the last control point
-					var segList = path.pathSegList;
-					var numItems = segList.numberOfItems;
-					var endSeg = segList.getItem(numItems-1);
-
-					var curX = endSeg.x, curY = endSeg.y;
-					var propX, propY;
-					if(endSeg.x2 !== undefined ){
-						propX = "x2";
-					}else if(endSeg.x1  !== undefined ){
-						propX = "x1";
-					} 
-
-					//debugger;
-					if(endSeg.y2  !== undefined ){
-						propY = "y2";
-					}else if(endSeg.y1  !== undefined ){
-						propY = "y1";
-					} 
-
-					//if(propX === undefined || propY === undefined) debugger;
-
-					if(mirror){
-						x = x + 2*(curX - x); 
-						y = y + 2*(curY - y);
-					}
-
-					//console.log("curX",curX,"curY",curY,"x",x,"y",y,"propX",propX,"propY",propY);
-
-					endSeg[propX] = x;
-					endSeg[propY] = y;
-				},
-				setTarget : function(target){
-
-					//set up the constraint graph for the target
-					function getConstraintFunction(xOrY,isSource){
-						return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
-							var x0 = fromX + fromWidth/2;
-							var y0 = fromY + fromHeight/2;
-
-							var x1 = toX + toWidth/2;
-							var y1 = toY + toHeight/2;
-
-
-							var p1 = new Point2D(x0,y0),
-								p2 = new Point2D(x1,y1);
-
-							var r1,r2;
-							if(isSource){
-								r1 = new Point2D(fromX,fromY);
-								r2 = new Point2D(fromX + fromWidth, fromY + fromHeight);
-							}else{
-								r1 = new Point2D(toX,toY);
-								r2 = new Point2D(toX + toWidth, toY + toHeight);
-							}
-
-							var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
-
-							var point = inter.points.pop();
-
-							return point && point[xOrY];	//if there's no intersection, we might get back undefined
-						}
-					}
-
-
-					//remove and update sourceConstraintX and sourceConstraintY to avoid arrow occlusion 
-					[sourceConstraintX,sourceConstraintY].forEach(function(c){
-						constraintGraph.splice(constraintGraph.indexOf(c),1);
-					});
-
-
-					var depList = [cm.NodeAttrExpr(source,"x"),
-								cm.NodeAttrExpr(source,"y"),
-								cm.NodeAttrExpr(source,"width"),
-								cm.NodeAttrExpr(source,"height"),
-								cm.NodeAttrExpr(target,"x"),
-								cm.NodeAttrExpr(target,"y"),
-								cm.NodeAttrExpr(target,"width"),
-								cm.NodeAttrExpr(target,"height")];
-					
-					//set up target constraints
-					targetConstraintX = 
-						cm.Constraint(
-							cm.NodeAttr(path,"$endX"),
-							depList, 
-							getConstraintFunction("x",false)
-						);
-
-					targetConstraintY = 
-						cm.Constraint(
-							cm.NodeAttr(path,"$endY"),
-							depList, 
-							getConstraintFunction("y",false)
-						);
-				
-					//set up new sourceConstraintX and sourceConstraintY
-					sourceConstraintX = 
-						cm.Constraint(
-							cm.NodeAttr(path,"$startX"),
-							depList, 
-							getConstraintFunction("x",true)
-						);
-
-
-					sourceConstraintY = 
-						cm.Constraint(
-							cm.NodeAttr(path,"$startY"),
-							depList, 
-							getConstraintFunction("y",true)
-						);
-
-					constraintGraph.push(sourceConstraintX,
-								sourceConstraintY,
-								targetConstraintX,
-								targetConstraintY);
-
-					requestLayout();
-				},
-				rollback : function(){
-					//here using targetConstraintX/targetConstraintY to encode state 
-					if(targetConstraintX && targetConstraintY){
-						[sourceConstraintX,sourceConstraintY,targetConstraintX,targetConstraintY].forEach(function(c){
-							constraintGraph.splice(constraintGraph.indexOf(c),1);
-						});
-
-						sourceConstraintX = originalSourceConstraintX;
-						sourceConstraintY = originalSourceConstraintY;
-
-						constraintGraph.push(sourceConstraintX,sourceConstraintY);  
-
-						targetConstraintX = targetConstraintY = null;
-					
-						requestLayout();
-					}else{ 
-						this.remove();
-					}
-				},	
-				getNumberOfControlPoints : function(){
-					return 0;
-				},
-				remove : function(){
-					//remove self from dom
-					path.parentNode.removeChild(path);
-					
-					//remove constraints
-					[sourceConstraintX,sourceConstraintY,targetConstraintX,targetConstraintY].forEach(function(c){
-						constraintGraph.splice(constraintGraph.indexOf(c),1);
-					});
-
-					requestLayout();
-				}
-
-			}
-
+			return path;
 		},
 
 		RadioButtonGroup : function(x,y){
