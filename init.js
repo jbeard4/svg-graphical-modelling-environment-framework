@@ -31,7 +31,7 @@ function init(evt) {
 	//setup canvas as a drop target
 
 	constructors.setupDropTarget(rootRectDropTarget,
-						svgRoot,
+						nodeLayer,
 						{topPadding:10,
 							bottomPadding:10,
 							leftPadding:10,
