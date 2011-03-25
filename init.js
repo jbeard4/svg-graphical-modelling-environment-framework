@@ -10,6 +10,7 @@ function init(evt) {
 
 	var nodeLayer = svg.group("$node-layer");
 	var edgeLayer = svg.group("$edge-layer");
+	var controlLayer = svg.group("$control-layer");
 
 	var constraintGraph = [];
 
@@ -26,7 +27,7 @@ function init(evt) {
 	//hook up behaviour
 	compiledStatechartInstance = new StatechartExecutionContext(); 
 
-	var constructors = setupConstructors(compiledStatechartInstance,constraintModule,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer); 
+	var constructors = setupConstructors(compiledStatechartInstance,constraintModule,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer,controlLayer); 
 
 	//setup canvas as a drop target
 

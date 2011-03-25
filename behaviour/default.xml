@@ -47,6 +47,54 @@
 				_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
 		</transition>
 
+		<transition event="mousedown" target="editing_curve"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_EDITABLE]">
+		</transition>
+
+	</state>
+
+	<state id="editing_curve" initial="before_mousedown_on_control_point">
+		<datamodel>
+			<data id="curveBeingEdited"/>
+			<data id="controlPointBeingDragged"/>
+		</datamodel>
+
+		<onentry>
+			<assign location="curveBeingEdited" expr="_event.data.currentTarget"/>
+			<script>
+				curveBeingEdited.showControlPoints(); 
+			</script>
+		</onentry>
+
+		<onexit>
+			<script>
+				curveBeingEdited.hideControlPoints(); 
+			</script>
+		</onexit>
+
+		<state id="before_mousedown_on_control_point">
+			<transition event="mousedown" target="dragging_control_point"
+				cond="_event.data.currentTarget.behaviours[modules.behaviours.CTRL_POINT_DRAG]">
+
+				<assign location="controlPointBeingDragged" expr="_event.data.currentTarget"/>
+
+			</transition>
+
+			<!-- by default, mousdeown will just deselct -->
+			<transition event="mousedown" target="idle"/>
+			
+		</state>
+
+		<state id="dragging_control_point">
+			<transition event="mouseup" target="before_mousedown_on_control_point"/>
+
+			<transition event="mousemove">
+				<script>
+					controlPointBeingDragged.moveTo(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+				</script>
+			</transition>
+		</state>
+
 	</state>
 
 	<state id="drawing_curve" initial="before_mouseover_arrow_target">

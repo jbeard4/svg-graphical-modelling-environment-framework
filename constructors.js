@@ -4,9 +4,9 @@
 **/
 
 
-function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer){
+function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer,controlLayer){
 
-	function merge(from,to){
+	function mixin(from,to){
 		for(var p in from){
 			if(from.hasOwnProperty(p)) to[p] = from[p];
 		}
@@ -15,6 +15,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 	function hookElementEventsToStatechart(element,events,stopPropagation){
 		events.forEach(function(eventName){
 			element.addEventListener(eventName,function(e){
+				console.log(element,eventName);
 				e.preventDefault();
 
 				if(stopPropagation) e.stopPropagation();
@@ -26,9 +27,74 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		})
 	}
 
-	function addArrowEditorBehaviour(){
+	var controlPointDragBehaviourAPI = {
+		moveTo : function(x,y){
+			this.segment[this.propX] = x;
+			this.segment[this.propY] = y;
+
+			this.cx.baseVal.value = x;
+			this.cy.baseVal.value = y;
+		},
+		remove : function(){
+			//simply remove him from DOM
+			this.parentNode.removeChild(this);
+		}
+	}
+
+	function setupControlPointDragBehaviour(segment,propX,propY){
+		this.behaviours = this.behaviours || {};
+
+		this.behaviours.CTRL_POINT_DRAG = true;
+
+		this.segment = segment;
+		this.propX = propX;
+		this.propY = propY;
+
+		hookElementEventsToStatechart(this,["mousedown"],true);
+
+		mixin(controlPointDragBehaviourAPI,this);
+	}
+
+
+	var setupArrowEditorBehaviourAPI = {
+		showControlPoints : function(){
+			//create control points
+			//which relate to a particular path, pathsegment (referred to by index), and properties (0,1,or 2 for endpoint, ctrlPoint 1, ctrlPoint2)
+			//the statechart then knows how to interpet those. get a behaviour CONTROL_POINT_DRAGGABLE
+			//although it might be better just to have a general dragging interface... yah... ok. yah, this can all live in idle don't need to be in a special state to edit curves. yah, i like it. the only question is how to get it out of editing mode. and the answer to that is... normally to click the canvas? yah. so we would need to route this event down.... ok, i can live with that. this will be part of the general deselection method anyway... I say we go for the more general approach now. 
+
+			for(var i=0; i < this.pathSegList.numberOfItems; i++){
+				var pathSeg = this.pathSegList.getItem(i)
+
+				var propList = [0]
+				if(pathSeg.x1) propList.push(1); 
+				if(pathSeg.x2) propList.push(2); 
+
+				var controlPoints = propList.map(function(p){
+					return constructors.ControlPoint(pathSeg,p) 
+				});
+
+				this.controlPoints = this.controlPoints.concat(controlPoints);
+			}
+			
+		},
+		hideControlPoints : function(){
+			this.controlPoints.forEach(function(c){c.remove()});
+		}
+	}
+
+	function setupArrowEditorBehaviour(){
 		//register event listener
-		//TODO
+		this.behaviours = this.behaviours || {};
+
+		this.behaviours.ARROW_EDITABLE = true;
+
+		this.controlPoints = [];
+
+		hookElementEventsToStatechart(this,["mousedown","mouseup"],true);
+
+		mixin(setupArrowEditorBehaviourAPI,this);
+
 	}
 
 	//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
@@ -247,7 +313,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 		constraintGraph.push(this.sourceConstraintX,this.sourceConstraintY);
 
-		merge(drawPathBehaviourAPI,this); 
+		mixin(drawPathBehaviourAPI,this); 
 	}
 
 	function setupHighlightable(e){
@@ -448,7 +514,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 	}
 
 	//FIXME: we also need a way to delete stuff. which will mean deleting the corresponding elements in the constraint graph. need ot think about how best to do that, what that will mean. can imagine it bubbling out... like, arrows should be deleted if the thing that they target gets deleted... so maybe a more sophisticated rollback for the CS is needed?
-	return {
+	var constructors = {
 		setupDropTarget : setupDropTarget,
 		//TODO: the others...
 		ClassIcon : function(x,y){
@@ -725,6 +791,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 			//set up behaviour interface and data
 			setupDrawPath.call(path,source);
+			setupArrowEditorBehaviour.call(path);
 
 			return path;
 		},
@@ -816,7 +883,25 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					return selectedButton;
 				}
 			}
+		},
+
+		//note: we don't call this an Icon, because it doesn't relate to anything in the AS
+		ControlPoint : function(segment,propNum){
+	
+
+			var propStr = propNum || "";
+			var propX = "x" + propStr;
+			var propY = "y" + propStr;
+
+			var c = svg.circle(controlLayer,segment[propX],segment[propY],5,{fill:"blue",stroke:"black"});
+			
+			setupControlPointDragBehaviour.call(c,segment,propX,propY);
+
+			return c;
+			
 		}
 	}
+
+	return constructors;
 
 }
