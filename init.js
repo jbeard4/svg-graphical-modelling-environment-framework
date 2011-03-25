@@ -53,7 +53,10 @@ function init(evt) {
 			requestLayout:requestLayout
 		}});
 
-	["keydown","keyup"].forEach(function(eventName){
+	//for now, it only makes sense to use keydown
+	["keydown"
+		//,"keyup"
+		].forEach(function(eventName){
 		svgRoot.addEventListener(eventName,function(e){
 			var eventMap = {
 				8:  "backspace",

@@ -54,18 +54,19 @@
 			<data id="curveBeingDrawn"/>
 		</datamodel>
 
-		<!-- normally we would roll back points here, but because we assume he's a line, we just delete it and return to idle.
-			other stuff will have more sophisticated behaviour involving rolling back points -->
-		<!-- TODO: update rollback -->
-		<!--
-		<transition event="esc" target="idle">
-			<script>
-				curveBeingDrawn.remove();
-			</script>
-		</transition>
-		-->
-
 		<state id="before_mouseover_arrow_target" initial="selecting_initial_curve_drawing_mode">
+
+			<transition event="esc" cond="!curveBeingDrawn.willPathBeEmptyAfterRemovingNextPoint()">
+				<script>
+					curveBeingDrawn.rollbackPoint();
+				</script>
+			</transition>
+
+			<transition event="esc" target="idle" cond="curveBeingDrawn.willPathBeEmptyAfterRemovingNextPoint()">
+				<script>
+					curveBeingDrawn.remove();
+				</script>
+			</transition>
 			
 			<state id="selecting_initial_curve_drawing_mode">
 				<onentry>
@@ -165,10 +166,6 @@
 			<!-- TODO: make sure that he's the same target before returning? -->
 			<transition target="updating_endpoint_before_selecting_next_mode" event="mouseout"
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
-				<script>
-					//rollback target
-					curveBeingDrawn.rollback();
-				</script>
 			</transition>
 
 			<transition event="mousedown" target="idle"/>

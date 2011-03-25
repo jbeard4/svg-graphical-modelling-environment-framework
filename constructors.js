@@ -12,11 +12,8 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		}
 	}
 
-	
+	//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
 	var drawPathBehaviourAPI = {
-		isPathEmpty : function (){
-			return !this.pathSegList.numberOfItems>1;	//1, because a move counts as empty
-		},
 
 		willPathBeEmptyAfterRemovingNextPoint : function (){
 			return this.pathSegList.numberOfItems==2;	
@@ -191,28 +188,6 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 						this.targetConstraintX,
 						this.targetConstraintY);
 
-		},
-		rollback : function(){
-			//here using targetConstraintX/targetConstraintY to encode state 
-			if(this.targetConstraintX && this.targetConstraintY){
-				[this.sourceConstraintX,this.sourceConstraintY,this.targetConstraintX,this.targetConstraintY].forEach(function(c){
-					constraintGraph.splice(constraintGraph.indexOf(c),1);
-				});
-
-				this.sourceConstraintX = this.originalSourceConstraintX;
-				this.sourceConstraintY = this.originalSourceConstraintY;
-
-				constraintGraph.push(this.sourceConstraintX,this.sourceConstraintY);  
-
-				this.targetConstraintX = this.targetConstraintY = null;
-			
-				requestLayout();
-			}else{ 
-				this.remove();
-			}
-		},	
-		getNumberOfControlPoints : function(){
-			return 0;
 		},
 		remove : function(){
 			//remove self from dom
