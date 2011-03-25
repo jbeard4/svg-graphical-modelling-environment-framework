@@ -6,6 +6,17 @@
 
 function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer,controlLayer){
 
+	function propNumtoPropString(propNum){
+		var propStr = propNum || "";
+		var propX = "x" + propStr;
+		var propY = "y" + propStr;
+
+		return {
+			x : propX,
+			y : propY
+		}
+
+	}
 	function mixin(from,to){
 		for(var p in from){
 			if(from.hasOwnProperty(p)) to[p] = from[p];
@@ -29,8 +40,8 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 	var controlPointDragBehaviourAPI = {
 		moveTo : function(x,y){
-			this.segment[this.propX] = x;
-			this.segment[this.propY] = y;
+			this.segment[this.propStr.x] = x;
+			this.segment[this.propStr.y] = y;
 
 			this.cx.baseVal.value = x;
 			this.cy.baseVal.value = y;
@@ -41,16 +52,14 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		}
 	}
 
-	function setupControlPointDragBehaviour(segment,propX,propY){
+	function setupControlPointDragBehaviour(kwArgs){
 		this.behaviours = this.behaviours || {};
 
 		this.behaviours.CTRL_POINT_DRAG = true;
 
-		this.segment = segment;
-		this.propX = propX;
-		this.propY = propY;
-
 		hookElementEventsToStatechart(this,["mousedown"],true);
+
+		mixin(kwArgs,this);
 
 		mixin(controlPointDragBehaviourAPI,this);
 	}
@@ -886,14 +895,28 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		},
 
 		//note: we don't call this an Icon, because it doesn't relate to anything in the AS
-		ControlPoint : function(segment,propNum){
+		ControlPoint : function(segment,propNum,associatedSegment,associatedPropNum,associatedMidpointSegment){
 	
 
-			var propStr = propNum || "";
-			var propX = "x" + propStr;
-			var propY = "y" + propStr;
+			var propStr = propNumtoPropString(propNum)
+			var associatedSegPropStr = propNumtoPropString(associatedPropNum)
 
-			var c = svg.circle(controlLayer,segment[propX],segment[propY],5,{fill:"blue",stroke:"black"});
+			var c = svg.circle(controlLayer,segment[propStr.x],segment[propStr.y],5,{fill:"gray",stroke:"black"});
+			
+			setupControlPointDragBehaviour.call(c,
+				{segment:segment,
+				propStr:propStr,	
+				associatedSegment:associatedSegment,
+				associatedSegPropStr:associatedSegPropStr,
+				associatedMidpointSegment:associatedMidpointSegment});
+
+			return c;
+			
+		},
+
+		EndPoint : function(segment,propNum){
+
+			var c = svg.rect(controlLayer,segment[propX],segment[propY],5,5,{fill:"blue",stroke:"black"});
 			
 			setupControlPointDragBehaviour.call(c,segment,propX,propY);
 
