@@ -51,6 +51,17 @@
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_EDITABLE]">
 		</transition>
 
+		<transition event="mousedown" 
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.TEXT_EDITABLE]">
+			<script>
+				var newText = prompt("Enter new text value:",_event.data.currentTarget.textContent);
+				if(newText &amp;&amp; newText.length){
+					_event.data.currentTarget.textContent = newText;
+				}
+				modules.requestLayout();
+			</script>
+		</transition>
+
 	</state>
 
 	<state id="editing_curve" initial="before_mousedown_on_control_point">

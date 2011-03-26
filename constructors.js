@@ -801,6 +801,12 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					);
 				}
 
+				newAttribute.behaviours = {
+					TEXT_EDITABLE : true
+				}
+
+				hookElementEventsToStatechart(newAttribute,["mousedown"],false);
+
 
 				attributes.push(newAttribute);
 				
@@ -811,6 +817,12 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//all entitites with some default behaviour get the appropriate event listeners hooked up.
 			//there is one default behaviour statechart instance shared by all elements
 			//FIXME: do we or do we not allow event propagation????
+
+			nameText.behaviours = {
+				TEXT_EDITABLE : true
+			}
+
+			hookElementEventsToStatechart(nameText,["mousedown"],false);
 
 			icon.behaviours = {
 				DRAGGABLE : true,
