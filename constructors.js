@@ -38,15 +38,6 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		})
 	}
 
-/*
-{ 
-segment:segment,
-propStr:propStr,	
-associatedEndPoint:associatedEndPoint,
-associatedControlPoint:associatedControlPoint}
-*/
-
-
 	var controlPointDragBehaviourAPI = {
 		//todo: this is not part of the api exposed to the statechart. should probably move this out, or mark it with an underscore
 		localMoveTo : function(x,y,x2,y2){
@@ -70,36 +61,38 @@ associatedControlPoint:associatedControlPoint}
 			this.localMoveTo(x,y);
 
 			//compute the position of the associated segment
+			if(this.associatedControlPoint){
 
-			var ox = this.associatedEndPoint.segment.x;
-			var oy = this.associatedEndPoint.segment.y;
+				var ox = this.associatedEndPoint.segment.x;
+				var oy = this.associatedEndPoint.segment.y;
 
-			//compute angle
-			var relativeX = x - ox;
-			var relativeY = y - oy;
+				//compute angle
+				var relativeX = x - ox;
+				var relativeY = y - oy;
 
-			var a = Math.atan2(relativeX,relativeY);
+				var a = Math.atan2(relativeX,relativeY);
 
-			//take the angle, rotate by 180 degrees
-			var a2 = a + Math.PI;
-			
-			//determine the current length of the associated segment (the hypotenuse of the triangle)
-			var associatedX = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x];
-			var associatedY = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.y];
+				//take the angle, rotate by 180 degrees
+				var a2 = a + Math.PI;
+				
+				//determine the current length of the associated segment (the hypotenuse of the triangle)
+				var associatedX = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x];
+				var associatedY = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.y];
 
-			var associatedRelativeX = associatedX - ox;
-			var associatedRelativeY = associatedY - oy;
+				var associatedRelativeX = associatedX - ox;
+				var associatedRelativeY = associatedY - oy;
 
-			//pythagorean theorem
-			var associatedHypotenuse = Math.sqrt(Math.pow(associatedRelativeX,2) + Math.pow(associatedRelativeY,2) ); 
+				//pythagorean theorem
+				var associatedHypotenuse = Math.sqrt(Math.pow(associatedRelativeX,2) + Math.pow(associatedRelativeY,2) ); 
 
-			var newAssociatedX = associatedHypotenuse * Math.sin(a2) + ox;
-			var newAssociatedY = associatedHypotenuse * Math.cos(a2) + oy;
-			
-			//this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x] = newAssociatedX; 
-			//this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x] = newAssociatedY; 
+				var newAssociatedX = associatedHypotenuse * Math.sin(a2) + ox;
+				var newAssociatedY = associatedHypotenuse * Math.cos(a2) + oy;
+				
+				//this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x] = newAssociatedX; 
+				//this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x] = newAssociatedY; 
 
-			this.associatedControlPoint.localMoveTo(newAssociatedX,newAssociatedY);
+				this.associatedControlPoint.localMoveTo(newAssociatedX,newAssociatedY);
+			}
 		},
 		remove : function(){
 			//simply remove him from DOM
@@ -174,36 +167,45 @@ associatedControlPoint:associatedControlPoint}
 
 			var numItems = this.pathSegList.numberOfItems;
 			for(var i=0; i < numItems; i++){
+				var nextPathSeg, cp1, cp2, endPoint;
+				nextPathSeg = cp1 = cp2 = null;
+
 				var pathSeg = this.pathSegList.getItem(i);
 				//debugger
 
 				//for the endpoint, always create an endpoint icon
-				var endPoint = constructors.EndPoint(pathSeg);
+				endPoint = constructors.EndPoint(pathSeg);
 
 				this.points.push(endPoint);
 
-				if(i > 0 && i < (numItems - 1) ){
+				if(i < (numItems - 1) ){
+					nextPathSeg = this.pathSegList.getItem(i+1);
+				}
 
-					var nextPathSeg = this.pathSegList.getItem(i+1);
+				//first is M segment so we skip it
+				//last segment we can skip too
 
-					//first is M segment so we skip it
-					//last segment we can skip too
+				//if current segment is not line, and next segment is not line
+				if(nextPathSeg && nextPathSeg.x1 !== undefined){
+					cp1 = constructors.ControlPoint(nextPathSeg,1,endPoint);
+				}
 
-					//if current segment is not line, and next segment is not line
-					if(pathSeg.x1 !== undefined && nextPathSeg.x1 !== undefined){
-						//if x2, use x2. otherwise, use x1
-						var p = pathSeg.x2 !== undefined ? 2 : 1;
+				if(pathSeg.x2 !== undefined){ 
+					cp2 = constructors.ControlPoint(pathSeg,2,endPoint,cp1);
+				}
 
-						var cp1 = constructors.ControlPoint(pathSeg,p,endPoint);
+				if(cp2 && cp1){
+					cp1.associatedControlPoint = cp2;
+				}
 
-						var cp2 = constructors.ControlPoint(nextPathSeg,1,endPoint,cp1);
+				if(cp1){
+					endPoint.associatedControlPoints.push(cp1);
+					this.points.push(cp1);
+				}
 
-						cp1.associatedControlPoint = cp2;
-
-						endPoint.associatedControlPoints.push(cp1,cp2);
-
-						this.points.push(cp1,cp2);
-					} 
+				if(cp2){
+					endPoint.associatedControlPoints.push(cp2);
+					this.points.push(cp2);
 				}
 
 			}
