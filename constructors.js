@@ -26,7 +26,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 	function hookElementEventsToStatechart(element,events,stopPropagation){
 		events.forEach(function(eventName){
 			element.addEventListener(eventName,function(e){
-				console.log(element,eventName);
+				//console.log(element,eventName);
 				e.preventDefault();
 
 				if(stopPropagation) e.stopPropagation();
@@ -38,13 +38,68 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		})
 	}
 
+/*
+{ 
+segment:segment,
+propStr:propStr,	
+associatedEndPoint:associatedEndPoint,
+associatedControlPoint:associatedControlPoint}
+*/
+
+
 	var controlPointDragBehaviourAPI = {
-		moveTo : function(x,y){
+		//todo: this is not part of the api exposed to the statechart. should probably move this out, or mark it with an underscore
+		localMoveTo : function(x,y,x2,y2){
+			//update current segment
 			this.segment[this.propStr.x] = x;
 			this.segment[this.propStr.y] = y;
 
-			this.cx.baseVal.value = x;
-			this.cy.baseVal.value = y;
+			//update graphical node
+			this.point.cx.baseVal.value = x;
+			this.point.cy.baseVal.value = y;
+
+			this.line.x1.baseVal.value = x;
+			this.line.y1.baseVal.value = y;
+
+			//optionally update the arrow endpoints
+			if(x2) this.line.x2.baseVal.value = x2;
+			if(y2) this.line.y2.baseVal.value = y2;
+
+		},
+		moveTo : function(x,y){
+			this.localMoveTo(x,y);
+
+			//compute the position of the associated segment
+
+			var ox = this.associatedEndPoint.segment.x;
+			var oy = this.associatedEndPoint.segment.y;
+
+			//compute angle
+			var relativeX = x - ox;
+			var relativeY = y - oy;
+
+			var a = Math.atan2(relativeX,relativeY);
+
+			//take the angle, rotate by 180 degrees
+			var a2 = a + Math.PI;
+			
+			//determine the current length of the associated segment (the hypotenuse of the triangle)
+			var associatedX = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x];
+			var associatedY = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.y];
+
+			var associatedRelativeX = associatedX - ox;
+			var associatedRelativeY = associatedY - oy;
+
+			//pythagorean theorem
+			var associatedHypotenuse = Math.sqrt(Math.pow(associatedRelativeX,2) + Math.pow(associatedRelativeY,2) ); 
+
+			var newAssociatedX = associatedHypotenuse * Math.sin(a2) + ox;
+			var newAssociatedY = associatedHypotenuse * Math.cos(a2) + oy;
+			
+			//this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x] = newAssociatedX; 
+			//this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x] = newAssociatedY; 
+
+			this.associatedControlPoint.localMoveTo(newAssociatedX,newAssociatedY);
 		},
 		remove : function(){
 			//simply remove him from DOM
@@ -64,6 +119,51 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		mixin(controlPointDragBehaviourAPI,this);
 	}
 
+	var endPointDragBehaviourAPI = {
+		//todo: this is not part of the api exposed to the statechart. should probably move this out, or mark it with an underscore
+		localMoveTo : function(x,y){
+			//update current segment
+			this.segment.x = x;
+			this.segment.y = y;
+
+			//update graphical node
+			this.x.baseVal.value = x;
+			this.y.baseVal.value = y;
+		},
+		moveTo : function(x,y){
+			var dx = x - this.segment.x;
+			var dy = y - this.segment.y;
+
+			this.localMoveTo(x,y);
+
+			this.associatedControlPoints.forEach(function(cp){
+				
+				cp.localMoveTo(
+					cp.segment[cp.propStr.x] + dx,
+					cp.segment[cp.propStr.y] + dy,
+					this.segment.x,
+					this.segment.y);
+			},this);
+		},
+		remove : function(){
+			//simply remove him from DOM
+			this.parentNode.removeChild(this);
+		}
+	}
+
+
+	function setupEndPointDragBehaviour(kwArgs){
+		this.behaviours = this.behaviours || {};
+
+		this.behaviours.CTRL_POINT_DRAG = true;
+
+		hookElementEventsToStatechart(this,["mousedown"],true);
+
+		mixin(kwArgs,this);
+
+		mixin(endPointDragBehaviourAPI,this);
+	}
+
 
 	var setupArrowEditorBehaviourAPI = {
 		showControlPoints : function(){
@@ -72,23 +172,48 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			//the statechart then knows how to interpet those. get a behaviour CONTROL_POINT_DRAGGABLE
 			//although it might be better just to have a general dragging interface... yah... ok. yah, this can all live in idle don't need to be in a special state to edit curves. yah, i like it. the only question is how to get it out of editing mode. and the answer to that is... normally to click the canvas? yah. so we would need to route this event down.... ok, i can live with that. this will be part of the general deselection method anyway... I say we go for the more general approach now. 
 
-			for(var i=0; i < this.pathSegList.numberOfItems; i++){
-				var pathSeg = this.pathSegList.getItem(i)
+			var numItems = this.pathSegList.numberOfItems;
+			for(var i=0; i < numItems; i++){
+				var pathSeg = this.pathSegList.getItem(i);
+				//debugger
 
-				var propList = [0]
-				if(pathSeg.x1) propList.push(1); 
-				if(pathSeg.x2) propList.push(2); 
+				//for the endpoint, always create an endpoint icon
+				var endPoint = constructors.EndPoint(pathSeg);
 
-				var controlPoints = propList.map(function(p){
-					return constructors.ControlPoint(pathSeg,p) 
-				});
+				this.points.push(endPoint);
 
-				this.controlPoints = this.controlPoints.concat(controlPoints);
+				if(i > 0 && i < (numItems - 1) ){
+
+					var nextPathSeg = this.pathSegList.getItem(i+1);
+
+					//first is M segment so we skip it
+					//last segment we can skip too
+
+					//if current segment is not line, and next segment is not line
+					if(pathSeg.x1 !== undefined && nextPathSeg.x1 !== undefined){
+						//if x2, use x2. otherwise, use x1
+						var p = pathSeg.x2 !== undefined ? 2 : 1;
+
+						var cp1 = constructors.ControlPoint(pathSeg,p,endPoint);
+
+						var cp2 = constructors.ControlPoint(nextPathSeg,1,endPoint,cp1);
+
+						cp1.associatedControlPoint = cp2;
+
+						endPoint.associatedControlPoints.push(cp1,cp2);
+
+						this.points.push(cp1,cp2);
+					} 
+				}
+
 			}
 			
 		},
 		hideControlPoints : function(){
-			this.controlPoints.forEach(function(c){c.remove()});
+			var c;
+			while(c = this.points.pop()){
+				c.remove();
+			}
 		}
 	}
 
@@ -98,7 +223,8 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 
 		this.behaviours.ARROW_EDITABLE = true;
 
-		this.controlPoints = [];
+		this.points = [];
+		this.endPoints = [];
 
 		hookElementEventsToStatechart(this,["mousedown","mouseup"],true);
 
@@ -895,32 +1021,43 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		},
 
 		//note: we don't call this an Icon, because it doesn't relate to anything in the AS
-		ControlPoint : function(segment,propNum,associatedSegment,associatedPropNum,associatedMidpointSegment){
-	
+		//NOTE: due to circular references, associatedControlPoint may not be passed into the constructor, but set up lazilly
+		ControlPoint : function(segment,propNum,associatedEndPoint,associatedControlPoint){
+
+			var g = svg.group(controlLayer);
 
 			var propStr = propNumtoPropString(propNum)
-			var associatedSegPropStr = propNumtoPropString(associatedPropNum)
 
-			var c = svg.circle(controlLayer,segment[propStr.x],segment[propStr.y],5,{fill:"gray",stroke:"black"});
+			var l = svg.line(g,
+				segment[propStr.x],
+				segment[propStr.y],
+				associatedEndPoint.segment.x,
+				associatedEndPoint.segment.y,
+				{fill:"none",stroke:"blue"});
+			var c = svg.circle(g,segment[propStr.x],segment[propStr.y],5,{fill:"yellow",stroke:"black"});
 			
-			setupControlPointDragBehaviour.call(c,
-				{segment:segment,
-				propStr:propStr,	
-				associatedSegment:associatedSegment,
-				associatedSegPropStr:associatedSegPropStr,
-				associatedMidpointSegment:associatedMidpointSegment});
+			setupControlPointDragBehaviour.call(g, { segment:segment,
+									point : c,
+									line : l,
+									propStr:propStr,	
+									associatedEndPoint:associatedEndPoint,
+									associatedControlPoint:associatedControlPoint});
 
-			return c;
+			return g;
 			
 		},
 
-		EndPoint : function(segment,propNum){
+		//associatedControlPoint1 and associatedControlPoint2 may be set up lazilly
+		EndPoint : function(segment,associatedControlPoints){
 
-			var c = svg.rect(controlLayer,segment[propX],segment[propY],5,5,{fill:"blue",stroke:"black"});
+			associatedControlPoints = associatedControlPoints || [];
+
+			var r = svg.rect(controlLayer,segment.x,segment.y,5,5,{fill:"blue",stroke:"black"});
 			
-			setupControlPointDragBehaviour.call(c,segment,propX,propY);
+			//TODO: set up behaviour
+			setupEndPointDragBehaviour.call(r,{segment:segment,associatedControlPoints:associatedControlPoints});
 
-			return c;
+			return r;
 			
 		}
 	}
