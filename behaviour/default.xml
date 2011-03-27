@@ -51,6 +51,10 @@
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_EDITABLE]">
 		</transition>
 
+		<transition event="mousedown" target="resizing"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.RESIZABLE]">
+		</transition>
+
 		<transition event="mousedown" 
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.TEXT_EDITABLE]">
 			<script>
@@ -63,6 +67,31 @@
 		</transition>
 
 	</state>
+
+	<state id="resizing">
+		<datamodel>
+			<data id="handleBeingResized"/>
+		</datamodel>
+
+		<onentry>
+			<assign location="handleBeingResized" expr="_event.data.currentTarget"/>
+		</onentry>
+
+		<onexit>
+			<script>
+				modules.requestLayout();
+			</script>
+		</onexit>
+
+		<transition event="mousemove">
+			<script>
+				handleBeingResized.resizeTo(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+			</script>
+		</transition>
+
+		<transition event="mouseup" target="idle"/>
+	</state>
+
 
 	<state id="editing_curve" initial="before_mousedown_on_control_point">
 		<datamodel>

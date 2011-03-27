@@ -38,3 +38,21 @@ g.pressed rect {
 .highlighted {
 	stroke : blue;
 }
+
+.resizable-e {
+	cursor : e-resize;
+	opacity : 0;
+	stroke-width : 10;
+}
+
+.resizable-se {
+	cursor : se-resize;
+	opacity : 0;
+	stroke-width : 10;
+}
+
+.resizable-s {
+	cursor : s-resize;
+	opacity : 0;
+	stroke-width : 10;
+}

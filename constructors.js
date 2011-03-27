@@ -6,6 +6,83 @@
 
 function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestLayout,svg,edgeLayer,nodeLayer,controlLayer){
 
+	//resize stuff
+
+	var resizableEastAPI = {
+		resizeTo : function(x,y){
+			this.x1.baseVal.value = x;
+			this.x2.baseVal.value = x;
+			this.associatedRect.width.baseVal.value = x - this.associatedRect.x.baseVal.value;
+		}
+	}
+
+	function setupResizableEast(kwArgs){
+
+		this.behaviours = this.behaviours || {};
+
+		this.behaviours.RESIZABLE = true;
+
+		$(this).addClass("resizable-e");
+
+		hookElementEventsToStatechart(this,["mousedown"],true);
+
+		mixin(resizableEastAPI,this);
+
+		mixin(kwArgs,this);
+		
+	}
+
+	var resizableSouthAPI = {
+		resizeTo : function(x,y){
+			this.y1.baseVal.value = y;
+			this.y2.baseVal.value = y;
+			this.associatedRect.height.baseVal.value = y - this.associatedRect.y.baseVal.value;
+		}
+	}
+
+	function setupResizableSouth(kwArgs){
+
+		this.behaviours = this.behaviours || {};
+
+		this.behaviours.RESIZABLE = true;
+
+		$(this).addClass("resizable-s");
+
+		hookElementEventsToStatechart(this,["mousedown"],true);
+
+		mixin(resizableSouthAPI,this);
+
+		mixin(kwArgs,this);
+	}
+
+
+	var resizableSouthEastAPI = {
+		resizeTo : function(x,y){
+			this.x1.baseVal.value = x;
+			this.x2.baseVal.value = x;
+			this.y1.baseVal.value = y;
+			this.y2.baseVal.value = y;
+			this.associatedRect.width.baseVal.value = x - this.associatedRect.x.baseVal.value;
+			this.associatedRect.height.baseVal.value = y - this.associatedRect.y.baseVal.value;
+		}
+	}
+
+	function setupResizableSouthEast(kwArgs){
+
+		this.behaviours = this.behaviours || {};
+
+		this.behaviours.RESIZABLE = true;
+
+		$(this).addClass("resizable-se");
+
+		hookElementEventsToStatechart(this,["mousedown"],true);
+
+		mixin(resizableSouthEastAPI,this);
+
+		mixin(kwArgs,this);
+	}
+
+
 	function propNumtoPropString(propNum){
 		var propStr = propNum || "";
 		var propX = "x" + propStr;
@@ -17,6 +94,7 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 		}
 
 	}
+
 	function mixin(from,to){
 		for(var p in from){
 			if(from.hasOwnProperty(p)) to[p] = from[p];
@@ -861,6 +939,15 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 			var classContainerRect = svg.rect(icon,x,y,PACKAGE_MIN_WIDTH,PACKAGE_MIN_HEIGHT);	//set an initial height
 			classContainerRect.id = "classContainerRect";
 
+
+			//generated resize stuff
+			var classContainerRectEastResizeHandle =  svg.line(icon,x+PACKAGE_MIN_WIDTH,y,x+PACKAGE_MIN_WIDTH,y+PACKAGE_MIN_HEIGHT);
+
+			var classContainerRectSouthResizeHandle =  svg.line(icon,x,y+PACKAGE_MIN_HEIGHT,x+PACKAGE_MIN_WIDTH,y+PACKAGE_MIN_HEIGHT);
+
+			var classContainerRectSouthEastResizeHandle =  svg.line(icon,x+PACKAGE_MIN_WIDTH - 5, y+PACKAGE_MIN_HEIGHT - 5,x+PACKAGE_MIN_WIDTH,y+PACKAGE_MIN_HEIGHT); //hardcoded 5 pixels
+
+
 			var children = [icon,nameContainerRect,nameText,classContainerRect];
 
 			//create constraint
@@ -883,7 +970,6 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 					cm.NodeAttr(nameText,"y"),
 					cm.NodeAttrExpr(nameContainerRect,"y")
 				),
-				
 
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"y"),
@@ -895,9 +981,71 @@ function setupConstructors(defaultStatechartInstance,cm,constraintGraph,requestL
 				cm.Constraint(
 					cm.NodeAttr(nameContainerRect,"x"),
 					cm.NodeAttrExpr(classContainerRect,"x")
-				)
+				),
 
+				//setup constraints on resize handles
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectEastResizeHandle,"$startX"),
+					cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectEastResizeHandle,"$startY"),
+					cm.NodeAttrExpr(classContainerRect,"y")
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectEastResizeHandle,"$endX"),
+					cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectEastResizeHandle,"$endY"),
+					cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
+				),
+
+
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthResizeHandle,"$startX"),
+					cm.NodeAttrExpr(classContainerRect,"x")
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthResizeHandle,"$startY"),
+					cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthResizeHandle,"$endX"),
+					cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthResizeHandle,"$endY"),
+					cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
+				),
+				
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$startX"),
+					cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum),
+					cm.dec(5)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$startY"),
+					cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum),
+					cm.dec(5)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$endX"),
+					cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
+				),
+				cm.Constraint(
+					cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$endY"),
+					cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
+				)
 			);
+
+			var resizeHandleKwArgs = {
+				associatedRect : classContainerRect,
+			}
+
+			setupResizableEast.call(classContainerRectEastResizeHandle,resizeHandleKwArgs);
+			setupResizableSouth.call(classContainerRectSouthResizeHandle,resizeHandleKwArgs);
+			setupResizableSouthEast.call(classContainerRectSouthEastResizeHandle,resizeHandleKwArgs);
 
 			icon.behaviours = {
 				DRAGGABLE : true,
