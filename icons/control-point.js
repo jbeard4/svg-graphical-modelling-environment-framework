@@ -1,7 +1,7 @@
-define(["helpers","behaviour/constructors/control-point-draggable"],
-	function(helpers,setupControlPointDragBehaviour){
+define(["helpers"],
+	function(helpers){
 
-		return function(svg,controlLayer,constraintGraph){
+		return function(svg,controlLayer,constraintGraph,setupControlPointDragBehaviour){
 			return function(segment,propNum,associatedEndPoint,associatedControlPoint){
 
 				var g = svg.group(controlLayer);

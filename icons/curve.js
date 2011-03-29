@@ -1,8 +1,6 @@
-define(["behaviour/constructors/path-drawable",
-	"behaviour/constructors/arrow-editable"],
-
-	function(setupDrawPath,setupArrowEditorBehaviour){		
-		return function(svg,edgeLayer){
+define(
+	function(){		
+		return function(svg,edgeLayer,setupDrawPath,setupArrowEditorBehaviour){
 			return function(source,x,y){
 				x = x || 0;
 				y = y || 0;

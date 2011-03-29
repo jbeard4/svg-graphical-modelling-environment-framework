@@ -1,9 +1,7 @@
-define(["c",
-	"behaviour/constructors/resizable",
-	"behaviour/constructors/drop-targetable.js"],
+define(["c"],
 
-	function(cm,resizable,setupDropTarget){
-		return function(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout){
+	function(cm){
+		return function(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout,resizable,setupDropTarget){
 			return function(x,y){
 
 				var PACKAGE_MIN_WIDTH = 100, 

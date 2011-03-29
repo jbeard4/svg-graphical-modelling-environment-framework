@@ -1,6 +1,6 @@
-define(["behaviour/constructors/end-point-draggable"],
-	function(setupEndPointDragBehaviour){
-		return function(svg,controlLayer){
+define(
+	function(){
+		return function(svg,controlLayer,setupEndPointDragBehaviour){
 			//associatedControlPoint1 and associatedControlPoint2 may be set up lazilly
 			return function(segment,associatedControlPoints){
 

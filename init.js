@@ -2,25 +2,26 @@ function init(evt) {
 
 	var svgRoot = evt.target.ownerDocument.documentElement;
 
-	var svg = new $.svg._wrapperClass(         
-		svgRoot,
-		{clientWidth: "100%", clientHeight: "100%"});     
-
 	require(["c","lib/svg","behaviours",
-			"behaviour/constructors/arrow-editable.js",
-			"behaviour/constructors/control-point-draggable.js",
-			"behaviour/constructors/draggable.js",
-			"behaviour/constructors/drop-targetable.js",
-			"behaviour/constructors/end-point-draggable.js",
-			"behaviour/constructors/highlightable.js",
-			"behaviour/constructors/path-drawable.js",
-			"behaviour/constructors/resizable.js",
-			"icons/class.js",
-			"icons/control-point.js",
-			"icons/curve.js",
-			"icons/end-point.js",
-			"icons/package.js",
-			"icons/radio-button-group.js"],
+			"behaviour/constructors/arrow-editable",
+			"behaviour/constructors/control-point-draggable",
+			"behaviour/constructors/draggable",
+			"behaviour/constructors/drop-targetable",
+			"behaviour/constructors/end-point-draggable",
+			"behaviour/constructors/highlightable",
+			"behaviour/constructors/path-drawable",
+			"behaviour/constructors/resizable",
+			"icons/class",
+			"icons/control-point",
+			"icons/curve",
+			"icons/end-point",
+			"icons/package",
+			"icons/radio-button-group",
+
+			"lib/intersection/2D.js",
+			"lib/intersection/Intersection.js",
+			"build/default.js",
+			"batikCompatibility.js" ],
 
 		function(constraintModule,svgModule,behaviours,
 				arrowEditable,
@@ -37,6 +38,10 @@ function init(evt) {
 				endPointIcon,
 				packageIcon,
 				radioButtonGroupIcon){
+
+			var svg = new $.svg._wrapperClass(         
+				svgRoot,
+				{clientWidth: "100%", clientHeight: "100%"});     
 
 			var rootRectDropTarget = svg.rect(0,0,"100%","100%",{fill:"white",stroke:"none"});
 
@@ -77,16 +82,17 @@ function init(evt) {
 
 			//bootstrap constructors
 			var classIconConstructor = classIcon(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout),
-				controlPointIconConstructor = controlPointIcon(svg,controlLayer,constraintGraph),
-
-				endPointDraggableConstructor = endPointDraggable(svg,controlLayer),
-				packageIconConstructor = packageIcon(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout),
+				controlPointDraggableConstructor = controlPointDraggable(hookElementEventsToStatechart),
+				controlPointIconConstructor = controlPointIcon(svg,controlLayer,constraintGraph,controlPointDraggableConstructor),
+				endPointDraggableConstructor = endPointDraggable(hookElementEventsToStatechart),
+				endPointIconConstructor = endPointIcon(svg,controlLayer,endPointDraggableConstructor),
 				radioButtonGroupConstructor = radioButtonGroupIcon (svg,nodeLayer,constraintGraph,requestLayout),
 				dropTargetableConstructor = dropTargetable(constraintGraph,hookElementEventsToStatechart),
-				arrowEditableConstructor = arrowEditable(endPointDraggableConstructor,controlPointIconConstructor,hookElementEventsToStatechart),
+				arrowEditableConstructor = arrowEditable(endPointIconConstructor,controlPointIconConstructor,hookElementEventsToStatechart),
 				pathDrawableConstructor = pathDrawable(constraintGraph),
 				resizableConstructor = resizable(hookElementEventsToStatechart),
-				curveIconConstructor = curveIcon(svg,edgeLayer);
+				packageIconConstructor = packageIcon(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout,resizableConstructor,dropTargetableConstructor),
+				curveIconConstructor = curveIcon(svg,edgeLayer,pathDrawableConstructor,arrowEditableConstructor);
 
 			
 
