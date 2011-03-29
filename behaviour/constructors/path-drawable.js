@@ -1,6 +1,6 @@
 define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 
-	function(h,cm,requestLayout){
+	function(h,cm){
 		return function(constraintGraph){
 			//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
 			var drawPathBehaviourAPI = {
@@ -185,7 +185,6 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 						constraintGraph.splice(constraintGraph.indexOf(c),1);
 					});
 
-					requestLayout();
 				}
 			};
 

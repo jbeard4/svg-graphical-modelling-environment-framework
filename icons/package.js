@@ -121,6 +121,11 @@ define(["c"],
 					)
 				);
 
+				icon.contains = function(shape){
+					//this isn't strictly correct. we should keep an array of subentities
+					return children.indexOf(shape) !== -1;
+				};
+
 				var resizeHandleKwArgs = {
 					associatedRect : classContainerRect
 				};

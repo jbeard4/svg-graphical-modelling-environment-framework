@@ -55,17 +55,33 @@
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.RESIZABLE]">
 		</transition>
 
-		<transition event="mousedown" 
+		<transition event="mousedown" target="after_mousedown_on_editable_text"
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.TEXT_EDITABLE]">
+		</transition>
+
+	</state>
+
+	<state id="after_mousedown_on_editable_text">
+		<datamodel>
+			<data id="textBeingEdited"/>
+		</datamodel>
+
+		<onentry>
+			<assign location="textBeingEdited" expr="_event.data.currentTarget"/>
+		</onentry>
+
+		<transition event="mousemove" target="dragging"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]"/>
+
+		<transition event="mouseup" target="idle">
 			<script>
-				var newText = prompt("Enter new text value:",_event.data.currentTarget.textContent);
+				var newText = prompt("Enter new text value:",textBeingEdited.textContent);
 				if(newText &amp;&amp; newText.length){
-					_event.data.currentTarget.textContent = newText;
+					textBeingEdited.textContent = newText;
 				}
 				modules.requestLayout();
 			</script>
 		</transition>
-
 	</state>
 
 	<state id="resizing">
