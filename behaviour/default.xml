@@ -91,6 +91,7 @@
 
 		<onentry>
 			<assign location="handleBeingResized" expr="_event.data.currentTarget"/>
+			<assign location="eventStamp" expr="_event.data.domEvent"/>
 		</onentry>
 
 		<onexit>
@@ -100,9 +101,11 @@
 		</onexit>
 
 		<transition event="mousemove">
+			<assign location="tDelta" expr="computeTDelta(eventStamp,_event.data.domEvent)"/>
 			<script>
-				handleBeingResized.resizeTo(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
+				handleBeingResized.resizeBy(tDelta);
 			</script>
+			<assign location="eventStamp" expr="_event.data.domEvent"/>
 		</transition>
 
 		<transition event="mouseup" target="idle"/>

@@ -50,6 +50,7 @@ function init(evt) {
 			var controlLayer = svg.group("$control-layer");
 
 			var constraintGraph = [];
+			var selectedIcons = [];
 
 			function requestLayout(){
 				//goal of this function is to act as a listener, decoupling those objects that can change the scene graph (visual object or constraints), 

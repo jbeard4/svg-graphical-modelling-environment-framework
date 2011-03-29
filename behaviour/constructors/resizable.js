@@ -4,10 +4,12 @@ define(["helpers"],
 			//resize stuff
 
 			var resizableEastAPI = {
-				resizeTo : function(x,y){
-					this.x1.baseVal.value = x;
-					this.x2.baseVal.value = x;
-					this.associatedRect.width.baseVal.value = x - this.associatedRect.x.baseVal.value;
+				resizeBy : function(delta){
+                    var dx = delta.dx;
+                    console.log(dx);
+					this.x1.baseVal.value += dx;
+					this.x2.baseVal.value += dx;
+					this.associatedRect.width.baseVal.value += dx;
 				}
 			};
 
@@ -28,10 +30,11 @@ define(["helpers"],
 			}
 
 			var resizableSouthAPI = {
-				resizeTo : function(x,y){
-					this.y1.baseVal.value = y;
-					this.y2.baseVal.value = y;
-					this.associatedRect.height.baseVal.value = y - this.associatedRect.y.baseVal.value;
+				resizeBy : function(delta){
+                    var dy = delta.dy;
+					this.y1.baseVal.value = dy;
+					this.y2.baseVal.value = dy;
+					this.associatedRect.height.baseVal.value += dy;
 				}
 			};
 
@@ -52,13 +55,14 @@ define(["helpers"],
 
 
 			var resizableSouthEastAPI = {
-				resizeTo : function(x,y){
-					this.x1.baseVal.value = x;
-					this.x2.baseVal.value = x;
-					this.y1.baseVal.value = y;
-					this.y2.baseVal.value = y;
-					this.associatedRect.width.baseVal.value = x - this.associatedRect.x.baseVal.value;
-					this.associatedRect.height.baseVal.value = y - this.associatedRect.y.baseVal.value;
+				resizeBy : function(delta){
+                    var dx = delta.dx, dy = delta.dy;
+					this.x1.baseVal.value += dx;
+					this.x2.baseVal.value += dx;
+					this.y1.baseVal.value += dy;
+					this.y2.baseVal.value += dy;
+					this.associatedRect.width.baseVal.value += dx;
+					this.associatedRect.height.baseVal.value += dy;
 				}
 			};
 
