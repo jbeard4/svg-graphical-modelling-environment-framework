@@ -162,7 +162,10 @@ function init(evt) {
 						scEvent = "ctrl_" + scEvent;
 					}
 
-					e.preventDefault();
+					//we don't want to override ctrl+r... probably others as well
+					if(scEvent !== "ctrl_r"){
+						e.preventDefault();
+					}
 
 					compiledStatechartInstance.GEN(scEvent,({domEvent:e,currentTarget:svgRoot}));
 				},false);

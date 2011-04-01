@@ -99,17 +99,19 @@ define(["c","helpers","behaviour/constructors/highlightable"],
 								cm.Constraint(
 									cm.NodeAttr(this,"width"),
 									[cm.NodeAttrExpr(this,"x"),
+										cm.NodeAttrExpr(this,["x","width"],cm.sum),
 										cm.NodeAttrExpr(shape,["x","width"],cm.sum)],
-									function(classContainerRectX){
+									function(classContainerRectX,classContainerRectRightX){
 										//TODO: read arbitrary arguments for second parameter
 
 										var args = Array.prototype.slice.call(arguments);
-										args = args.slice(1);
+										args = args.slice(2);
 										/*jsl:ignore*/
 										var rightXArgs = args.map(function(shapeRightX){return shapeRightX - classContainerRectX});
 										/*jsl:end*/
 										var rightX = Math.max.apply(this,rightXArgs); 
 										var rightXPlusPadding = rightX + spacing.rightPadding; 
+										rightXPlusPadding = Math.max(rightXPlusPadding,classContainerRectRightX - classContainerRectX);
 										return rightXPlusPadding >= spacing.minWidth ? rightXPlusPadding : spacing.minWidth; 
 									}
 								);
@@ -118,16 +120,18 @@ define(["c","helpers","behaviour/constructors/highlightable"],
 								cm.Constraint(
 									cm.NodeAttr(this,"height"),
 									[cm.NodeAttrExpr(this,"y"),
+										cm.NodeAttrExpr(this,["y","height"],cm.sum),
 										cm.NodeAttrExpr(shape,["y","height"],cm.sum)],
-									function(classContainerRectY,shapeBottomY){
+									function(classContainerRectY,classContainerRectBottomY){
 										//TODO: read arbitrary arguments for second parameter
 										var args = Array.prototype.slice.call(arguments);
-										args = args.slice(1);
+										args = args.slice(2);
 										/*jsl:ignore*/
 										var bottomYArgs = args.map(function(shapeBottomY){return shapeBottomY - classContainerRectY});
 										/*jsl:end*/
 										var bottomY = Math.max.apply(this,bottomYArgs); 
 										var bottomYPlusPadding = bottomY + spacing.leftPadding; 
+										bottomYPlusPadding = Math.max(bottomYPlusPadding, classContainerRectBottomY - classContainerRectY);
 
 										return bottomYPlusPadding  >= spacing.minHeight ? bottomYPlusPadding : spacing.minHeight ; 
 									}
