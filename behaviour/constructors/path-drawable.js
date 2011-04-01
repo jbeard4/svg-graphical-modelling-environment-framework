@@ -299,6 +299,8 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 
 			function setupDrawPath(source){
 
+				$(source).addClass("path-drawable");
+
 				this.source = source;
 
 				var segList = this.pathSegList;

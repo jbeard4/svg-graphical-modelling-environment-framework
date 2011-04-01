@@ -13,7 +13,8 @@ define(
 				//return the group
 				var p = svg.createPath();
 				var path = svg.path(edgeLayer,p.move(x,y).line(x+1,y+1));
-				path.setAttributeNS(null,"class","edge");	//TODO: jquery-ify this statement
+
+				$(path).addClass("edge-icon");
 
 				//set up behaviour interface and data
 				setupDrawPath.call(path,source);

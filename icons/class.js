@@ -4,6 +4,9 @@ define(["c"],
 			return function(x,y){
 				
 				var icon = svg.group(nodeLayer);
+
+				$(icon).addClass("class-icon");
+
 				var nameContainerRect = svg.rect(icon,x,y,1,1);
 				var nameText = svg.text(icon,0,0,"Class");	//we really shouldn't set x and y here... maybe use different api?
 

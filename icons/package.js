@@ -12,15 +12,13 @@ define(["c"],
 					PACKAGE_BOTTOM_PADDING = 10; 
 
 				var icon = svg.group(nodeLayer);
+
+				$(icon).addClass("package-icon");
+
 				var nameContainerRect = svg.rect(icon,0,0,1,1);
 				var nameText = svg.text(icon,0,0,"Package");
 
-				nameContainerRect.id = "nameContainerRect";
-				nameText.id = "nameText";
-
 				var classContainerRect = svg.rect(icon,x,y,PACKAGE_MIN_WIDTH,PACKAGE_MIN_HEIGHT);	//set an initial height
-				classContainerRect.id = "classContainerRect";
-
 
 				//generated resize stuff
 				var classContainerRectEastResizeHandle =  svg.line(icon,x+PACKAGE_MIN_WIDTH,y,x+PACKAGE_MIN_WIDTH,y+PACKAGE_MIN_HEIGHT);

@@ -71,6 +71,8 @@ define(["helpers"],
 
 				this.behaviours.ARROW_EDITABLE = true;
 
+				$(this).addClass("arrow-editable");
+
 				this.points = [];
 				this.endPoints = [];
 

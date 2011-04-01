@@ -6,6 +6,8 @@ define(["c"],
 
 				var icon = svg.group(nodeLayer);
 
+				$(icon).addClass("radio-button-group-icon");
+
 				var buttons = [],
 					selectedButton;
 

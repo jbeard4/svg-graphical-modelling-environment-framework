@@ -6,6 +6,8 @@ define(["helpers"],
 
 				var g = svg.group(controlLayer);
 
+				$(g).addClass("control-point-icon");
+
 				var propStr = helpers.propNumtoPropString(propNum);
 
 				var l = svg.line(g,

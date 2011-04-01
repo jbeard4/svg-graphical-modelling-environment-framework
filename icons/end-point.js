@@ -7,6 +7,8 @@ define(
 				associatedControlPoints = associatedControlPoints || [];
 
 				var r = svg.rect(controlLayer,segment.x,segment.y,5,5,{fill:"blue",stroke:"black"});
+
+				$(r).addClass("end-point-icon");
 				
 				//TODO: set up behaviour
 				setupEndPointDragBehaviour.call(r,{segment:segment,associatedControlPoints:associatedControlPoints});

@@ -6,6 +6,8 @@ define(["c","helpers","behaviour/constructors/highlightable"],
 			//TODO: make the constraint setup function more flexible?
 			function setupDropTarget(classContainerRect,icon,spacing,setupWrapConstraints){
 
+				$(classContainerRect).addClass("drop-target");
+
 				setupHighlightable(classContainerRect);	//drop target must be highlightable
 
 				classContainerRect.behaviours.DROP_TARGET = true;

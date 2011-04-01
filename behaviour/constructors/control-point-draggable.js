@@ -68,6 +68,8 @@ define(["helpers"],
 
 				this.behaviours.CTRL_POINT_DRAG = true;
 
+				$(this).addClass("ctrl-point-draggable");
+
 				hookElementEventsToStatechart(this,["mousedown"],true);
 
 				h.mixin(kwArgs,this);
