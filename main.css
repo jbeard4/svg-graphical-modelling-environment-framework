@@ -41,21 +41,18 @@ g.pressed rect {
 
 .resizable-e {
 	cursor : e-resize;
-	opacity : 1;
+	opacity : 0;
 	stroke-width : 10;
-	stroke : red;
 }
 
 .resizable-se {
 	cursor : se-resize;
-	opacity : 1;
+	opacity : 0;
 	stroke-width : 10;
-	stroke : red;
 }
 
 .resizable-s {
 	cursor : s-resize;
-	opacity : 1;
+	opacity : 0;
 	stroke-width : 10;
-	stroke : red;
 }

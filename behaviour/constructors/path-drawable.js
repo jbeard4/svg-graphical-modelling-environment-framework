@@ -105,40 +105,112 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 					var numItems = segList.numberOfItems;
 					var endSeg = segList.getItem(numItems-1);
 					var startSeg = segList.getItem(0);
+					var segAfterStartSeg = segList.getItem(1);
+
+					//add backward refs to path so that we can run layout on him
+					[startSeg,endSeg].forEach(function(seg){
+						h.addPathRefToEachSegment(this,seg);
+					},this);
 					
-					/*
-					if(numItems > 2){
-						var segmentAfterStartSeg = segList.getItem(1);
-						var xAfterStartSeg, yAfterStartSeg;
-						if(segmentAfterStartSeg.x1 !== undefined){
-							xAfterStartSeg = segmentAfterStartSeg.x1;
-							yAfterStartSeg = segmentAfterStartSeg.y1;
-						}else{
-							xAfterStartSeg = segmentAfterStartSeg.x;
-							yAfterStartSeg = segmentAfterStartSeg.y;
-						}
+					var getConstraintFunction;
+					if(numItems > 2 || segAfterStartSeg.x1 !== undefined){
+						var afterStartSegPropStr = segAfterStartSeg.x1 !== undefined ?  "1" : ""; 
 
-						var xBeforeEndSeg, yBeforeEndSeg;
+						var segBeforeEndSeg,beforeEndSegPropStr;
 						if(endSeg.x2 !== undefined){
-							xBeforeEndSeg = endSeg.x2;
-							yBeforeEndSeg = endSeg.y2;
+							beforeEndSegPropStr = "2";
+							segBeforeEndSeg = endSeg;
 						}else if(endSeg.x1 !== undefined){
-							xBeforeEndSeg = endSeg.x1;
-							yBeforeEndSeg = endSeg.y1;
+							beforeEndSegPropStr = "1";
+							segBeforeEndSeg = endSeg;
 						}else{
-							var segBeforeEndSeg = segList.getItem(numItems-2);
-							xBeforeEndSeg = segBeforeEndSeg.x;
-							yBeforeEndSeg = segBeforeEndSeg.y;
+							beforeEndSegPropStr = "";
+							segBeforeEndSeg = segList.getItem(numItems-2);
 						}
-
-						//ok... we need to extend constraint system to support line segments... shouldn't be too hard I think
 
 						//constraint will be the intersection between the rect, and the line starting from the center of the rect and extending to the point we have picked out. 
+						//start and end will now have different dep lists
+						var startDepList = [
+									cm.NodeAttrExpr(segAfterStartSeg,"x" + afterStartSegPropStr),
+									cm.NodeAttrExpr(segAfterStartSeg,"y" + afterStartSegPropStr),
+									cm.NodeAttrExpr(this.source,"x"),
+									cm.NodeAttrExpr(this.source,"y"),
+									cm.NodeAttrExpr(this.source,"width"),
+									cm.NodeAttrExpr(this.source,"height")];
+
+
+						var endDepList = [
+									cm.NodeAttrExpr(segBeforeEndSeg,"x" + beforeEndSegPropStr),
+									cm.NodeAttrExpr(segBeforeEndSeg,"y" + beforeEndSegPropStr),
+									cm.NodeAttrExpr(target,"x"),
+									cm.NodeAttrExpr(target,"y"),
+									cm.NodeAttrExpr(target,"width"),
+									cm.NodeAttrExpr(target,"height")];
+
+						//constraint computes the center point of the box constraints
+						//get the intersection of that, and the other point we're giving it
+						getConstraintFunction = function(xOrY){
+							return function(x0,y0,toX,toY,toWidth,toHeight){
+								var x1 = toX + toWidth/2;
+								var y1 = toY + toHeight/2;
+
+
+								var p1 = new Point2D(x0,y0),
+									p2 = new Point2D(x1,y1);
+
+								var r1,r2;
+								r1 = new Point2D(toX,toY);
+								r2 = new Point2D(toX + toWidth, toY + toHeight);
+
+								var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
+
+								var point = inter.points.pop();
+
+								return point && point[xOrY];	//if there's no intersection, we might get back undefined
+							};
+						};
+
+						//set up new sourceConstraintX and sourceConstraintY
+						this.sourceConstraintX = 
+							cm.Constraint(
+								cm.NodeAttr(startSeg,"x"),
+								startDepList, 
+								getConstraintFunction("x",true)
+							);
+
+
+						this.sourceConstraintY = 
+							cm.Constraint(
+								cm.NodeAttr(startSeg,"y"),
+								startDepList, 
+								getConstraintFunction("y",true)
+							);
+
+						//set up target constraints
+						this.targetConstraintX = 
+							cm.Constraint(
+								cm.NodeAttr(endSeg,"x"),
+								endDepList,
+								getConstraintFunction("x",false)
+							);
+
+						this.targetConstraintY = 
+							cm.Constraint(
+								cm.NodeAttr(endSeg,"y"),
+								endDepList,
+								getConstraintFunction("y",false)
+							);
+					
+
+						constraintGraph.push(this.sourceConstraintX,
+									this.sourceConstraintY,
+									this.targetConstraintX,
+									this.targetConstraintY);
+
 					}else{
-					*/
 
 						
-						function getConstraintFunction(xOrY,isSource){
+						getConstraintFunction =  function(xOrY,isSource){
 							return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
 								var x0 = fromX + fromWidth/2;
 								var y0 = fromY + fromHeight/2;
@@ -165,7 +237,7 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 
 								return point && point[xOrY];	//if there's no intersection, we might get back undefined
 							};
-						}
+						};
 
 						var depList = [cm.NodeAttrExpr(this.source,"x"),
 									cm.NodeAttrExpr(this.source,"y"),
@@ -175,12 +247,6 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 									cm.NodeAttrExpr(target,"y"),
 									cm.NodeAttrExpr(target,"width"),
 									cm.NodeAttrExpr(target,"height")];
-
-						
-						//add backward refs to path so that we can run layout on him
-						[startSeg,endSeg].forEach(function(seg){
-							h.addPathRefToEachSegment(this,seg);
-						},this);
 						
 						//set up target constraints
 						this.targetConstraintX = 
@@ -217,7 +283,7 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 									this.sourceConstraintY,
 									this.targetConstraintX,
 									this.targetConstraintY);
-					//}
+					}
 				},
 				remove : function(){
 					//remove self from dom
