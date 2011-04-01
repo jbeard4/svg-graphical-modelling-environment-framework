@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+    xmlns:xlink="http://www.w3.org/1999/xlink"> 
+
+	<script type="application/ecmascript">
+		Node.prototype.foo = 123;
+		var d = document.documentElement;
+		alert(d.foo);
+	</script> 
+</svg>
+

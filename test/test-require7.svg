@@ -1,0 +1,18 @@
+<?xml-stylesheet type="text/css" href="main.css" ?>    
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+    xmlns:xlink="http://www.w3.org/1999/xlink"> 
+
+	<script type="application/ecmascript" externalResourcesRequired="true" xlink:href="root/lib/require.js"/>
+	<script type="application/ecmascript"><![CDATA[
+		require(
+			["test6"],
+
+			function(test6){
+				console.log(test6);
+			});
+	]]></script>
+</svg>
+
+
+
+

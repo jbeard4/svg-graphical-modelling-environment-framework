@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+	<script id="x" type="application/ecmascript" xlink:href="foo.js"></script>
+	<script type="application/ecmascript">
+        
+        var svgNS = "http://www.w3.org/2000/svg", xlinkNS = "http://www.w3.org/1999/xlink";
+        var node = document.createElementNS(svgNS,"script");
+        node.setAttributeNS(null,"type","application/ecmascript");
+        node.setAttributeNS(null,"charset","utf-8");
+        node.setAttributeNS(xlinkNS,"href","foo.js");
+
+        node.addEventListener("load",function(e){
+            alert(window["foo"])
+        },false);
+
+        document.documentElement.appendChild(node);
+    </script>
+</svg>
+
+
+

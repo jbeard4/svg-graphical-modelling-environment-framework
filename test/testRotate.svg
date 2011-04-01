@@ -1,0 +1,100 @@
+<svg onload="init(evt)" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+    xmlns:xlink="http://www.w3.org/1999/xlink"> 
+
+
+	<script type="application/ecmascript" xlink:href="lib/jquery-1.2.6.js"></script> 
+	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
+	<script type="application/ecmascript" xlink:href="lib/jquery-svg/jquery.svgdom.js"></script> 
+
+	<script type="application/ecmascript"><![CDATA[
+		//make some axes
+		function init(evt) {     
+
+			var svgRoot = evt.target.ownerDocument.documentElement;
+
+			svg = new $.svg._wrapperClass(         
+				svgRoot,
+				{clientWidth: "100%", clientHeight: "100%"});     
+
+			svg.line(100,200,300,200,{fill:"none",stroke:"black"});
+			svg.line(200,100,200,300,{fill:"none",stroke:"black"});
+
+			//drawPointAndItsOpposite(200,200,300,300)
+
+			drawPointAndItsOpposite(200,200,290,150)
+		}
+
+		function drawPointAndItsOpposite(ox,oy,x,y){
+
+			var c = svg.circle(x,y,5,{fill:"red"});
+			svg.line(ox,oy,x,y,{fill:"none",stroke:"blue"});
+
+			var a = getAngle(ox,oy,x,y);
+
+			console.log(_radiansToDegrees(a));
+
+			var a2 = a + Math.PI;
+
+			console.log(_radiansToDegrees(a2));
+
+			var hl = getHypotenuseLength(ox,oy,x,y);
+
+			console.log(hl);
+
+			svg.circle(getX(ox,hl,a2),getY(oy,hl,a2),5,{fill:"yellow"});
+
+			svg.circle(getX(ox,20,a2),getY(oy,20,a2),5,{fill:"green"});
+		}
+
+		function getX(originX,lineLength,angle){
+			return lineLength * Math.sin(angle) + originX;
+		}
+
+		function getY(originY,lineLength,angle){
+			return lineLength * Math.cos(angle) + originY;
+		}
+
+		function getHypotenuseLength(originX,originY,x,y){
+			var relativeX = x - originX;
+			var relativeY = y - originY;
+			return Math.sqrt(Math.pow(relativeX,2) + Math.pow(relativeY,2)); 
+		}
+
+		function getAngle(originX,originY,x,y){
+			var relativeX = x - originX;
+			var relativeY = y - originY;
+			return Math.atan2(relativeX,relativeY);
+		}
+
+		function  _radiansToDegrees(r){
+			  return r*180/Math.PI;
+		}
+
+		/*
+
+		//compute angle
+		var relativeX = x - this.associatedEndPoint.segment.x;
+		var relativeY = y - this.associatedEndPoint.segment.y;
+
+		var a = Math.atan2(relativeY,relativeX);
+
+		//take the angle, rotate by 180 degrees
+		var a2 = a + Math.PI;
+		
+		//determine the current length of the associated segment (the hypotenuse of the triangle)
+		var associatedX = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.x];
+		var associatedY = this.associatedControlPoint.segment[this.associatedControlPoint.propStr.y];
+
+		var associatedRelativeX = associatedX - this.associatedEndPoint.segment.x;
+		var associatedRelativeY = associatedY - this.associatedEndPoint.segment.y;
+
+		//pythagorean theorem
+		var associatedHypotenuse = Math.sqrt(Math.pow(associatedRelativeX,2) + Math.pow(associatedRelativeY,2) ); 
+
+		var newAssociatedX = associatedHypotenuse * Math.sin(a2);
+		var newAssociatedY = associatedHypotenuse * Math.cos(a2);
+		*/
+	]]></script>
+</svg>
+
+
