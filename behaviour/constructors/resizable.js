@@ -5,8 +5,8 @@ define(["helpers"],
 
 			var resizableEastAPI = {
 				resizeBy : function(delta){
-                    var dx = delta.dx;
-                    console.log(dx);
+					var dx = delta.dx;
+					console.log(dx);
 					this.x1.baseVal.value += dx;
 					this.x2.baseVal.value += dx;
 					this.associatedRect.width.baseVal.value += dx;
@@ -31,7 +31,7 @@ define(["helpers"],
 
 			var resizableSouthAPI = {
 				resizeBy : function(delta){
-                    var dy = delta.dy;
+					var dy = delta.dy;
 					this.y1.baseVal.value = dy;
 					this.y2.baseVal.value = dy;
 					this.associatedRect.height.baseVal.value += dy;
@@ -56,7 +56,7 @@ define(["helpers"],
 
 			var resizableSouthEastAPI = {
 				resizeBy : function(delta){
-                    var dx = delta.dx, dy = delta.dy;
+					var dx = delta.dx, dy = delta.dy;
 					this.x1.baseVal.value += dx;
 					this.x2.baseVal.value += dx;
 					this.y1.baseVal.value += dy;

@@ -231,7 +231,7 @@
 				<transition event="mouseup" target="updating_endpoint_before_selecting_next_mode">
 					<script>
 						//create a new line segment
-						curveBeingDrawn.createNewLineSegment();
+						curveBeingDrawn.createNewLineSegment(_event.data.domEvent.clientX,_event.data.domEvent.clientY);
 					</script>
 				</transition>
 

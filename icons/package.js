@@ -67,56 +67,56 @@ define(["c"],
 
 					//setup constraints on resize handles
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectEastResizeHandle,"$startX"),
+						cm.NodeAttr(classContainerRectEastResizeHandle,"x1"),
 						cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectEastResizeHandle,"$startY"),
+						cm.NodeAttr(classContainerRectEastResizeHandle,"y1"),
 						cm.NodeAttrExpr(classContainerRect,"y")
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectEastResizeHandle,"$endX"),
+						cm.NodeAttr(classContainerRectEastResizeHandle,"x2"),
 						cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectEastResizeHandle,"$endY"),
+						cm.NodeAttr(classContainerRectEastResizeHandle,"y2"),
 						cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
 					),
 
 
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthResizeHandle,"$startX"),
+						cm.NodeAttr(classContainerRectSouthResizeHandle,"x1"),
 						cm.NodeAttrExpr(classContainerRect,"x")
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthResizeHandle,"$startY"),
+						cm.NodeAttr(classContainerRectSouthResizeHandle,"y1"),
 						cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthResizeHandle,"$endX"),
+						cm.NodeAttr(classContainerRectSouthResizeHandle,"x2"),
 						cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthResizeHandle,"$endY"),
+						cm.NodeAttr(classContainerRectSouthResizeHandle,"y2"),
 						cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
 					),
 					
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$startX"),
+						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"x1"),
 						cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum),
 						cm.dec(5)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$startY"),
+						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"y1"),
 						cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum),
 						cm.dec(5)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$endX"),
+						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"x2"),
 						cm.NodeAttrExpr(classContainerRect,["x","width"],cm.sum)
 					),
 					cm.Constraint(
-						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"$endY"),
+						cm.NodeAttr(classContainerRectSouthEastResizeHandle,"y2"),
 						cm.NodeAttrExpr(classContainerRect,["y","height"],cm.sum)
 					)
 				);

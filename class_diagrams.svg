@@ -2,17 +2,6 @@
 <svg onload="init(evt)" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
-
-	<!--
-	<script type="application/ecmascript" xlink:href="lib/intersection/Intersection.js"></script> 
-	<script type="application/ecmascript" xlink:href="lib/intersection/2D.js"></script> 
-	<script type="application/ecmascript" xlink:href="behaviours.js"></script> 
-	<script type="application/ecmascript" xlink:href="build/default.js"></script> 
-	<script type="application/ecmascript" xlink:href="lib/svg.js"></script> 
-	<script type="application/ecmascript" xlink:href="c.js"></script> 
-	<script type="application/ecmascript" xlink:href="constructors.js"></script> 
-	<script type="application/ecmascript" xlink:href="batikCompatibility.js"></script> 
-	-->
 	<script type="application/ecmascript" externalResourcesRequired="true" xlink:href="lib/jquery-1.2.6.js"></script> 
 	<script type="application/ecmascript" externalResourcesRequired="true" xlink:href="lib/jquery-svg/jquery.svg.js"></script> 
 	<script type="application/ecmascript" externalResourcesRequired="true" xlink:href="lib/jquery-svg/jquery.svgdom.js"></script> 

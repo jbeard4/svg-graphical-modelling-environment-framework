@@ -5,7 +5,7 @@ define(["lib/svg"],
 
 		var LABEL_PADDING = 10;
 
-		function identity(o){return o};
+		function identity(o){return o;}
 
 		//function sum(a,b){return a + b};
 
@@ -15,20 +15,20 @@ define(["lib/svg"],
 				toReturn += arguments[i];
 			}
 			return toReturn;
-		};
+		}
 
 
 		//higher order function used for padding and stuff
 		function inc(i){
 			return function(n){
 				return n + i;
-			}
+			};
 		}
 
 		function dec(i){
 			return function(n){
 				return n - i;
-			}
+			};
 		}
 
 		function compose(){
@@ -37,11 +37,13 @@ define(["lib/svg"],
 			var args = Array.prototype.slice.call(arguments);
 			return function(){
 				var r,f;
+				/*jsl:ignore*/
 				while(f = args.pop()){
-					r = f.apply(this,arguments)
+				/*jsl:end*/
+					r = f.apply(this,arguments);
 				}
 				return r;
-			}
+			};
 		}
 
 		function Constraint(source,destinationOrDestinations,layoutAction){
@@ -55,7 +57,7 @@ define(["lib/svg"],
 				source : source,	//NodeAttr
 				dest : destinationOrDestinations,	//NodeAttrExpression[]
 				expr : layoutAction
-			}
+			};
 		}
 
 		function NodeAttrExpr(node,attributeNameOrNames,expression){
@@ -67,7 +69,7 @@ define(["lib/svg"],
 
 			return {
 				nodeAttrs : attributeNameOrNames.map(function(attr){
-					return NodeAttr(node,attr)
+					return NodeAttr(node,attr);
 				}),
 				expr : expression
 			};
@@ -78,81 +80,12 @@ define(["lib/svg"],
 				node : node,
 				attr : attr,
 				toString : function(){
-					return "(" + node.id + "," + attr + ")"
+					return "(" + node.id + "," + attr + ")";
 				},
 				equals : function(nodeAttr){
 					return this.node === nodeAttr.node && this.attr === nodeAttr.attr;
 				}
-			}
-		}
-
-		function handleEndXOrEndY(sourceNode,isX,value){
-			if(sourceNode.localName === "path"){
-				var lastPathSegment = sourceNode.pathSegList.getItem(sourceNode.pathSegList.numberOfItems-1);
-
-				//we actually don't need to switch him, as endpoint will be x,y for all path segment types
-				//switch(lastPathSegment.pathSegTypeAsLetter)	
-
-				if(isX){
-					lastPathSegment.x = value; 
-				}else{
-					lastPathSegment.y = value; 
-				}
-			}else if(sourceNode.localName === "line"){
-				if(isX){
-					sourceNode.x2.baseVal.value = value;
-				}else{
-					sourceNode.y2.baseVal.value = value;
-				}
-			}else{
-				throw new Exception("attribute $endX must be used with node of type path or line");
-			}
-		}
-
-		function handleStartXOrStartY(sourceNode,isX,value){
-			if(sourceNode.localName === "path"){
-				var firstPathSegment = sourceNode.pathSegList.getItem(0);
-
-				//we actually don't need to switch him, as start segment will be move segment, hence x,y for all path segment types
-				//switch(firstPathSegment.pathSegTypeAsLetter)	
-
-				if(isX){
-					firstPathSegment.x = value; 
-				}else{
-					firstPathSegment.y = value; 
-				}
-			}else if(sourceNode.localName === "line"){
-				if(isX){
-					sourceNode.x1.baseVal.value = value;
-				}else{
-					sourceNode.y1.baseVal.value = value;
-				}
-			}else{
-				throw new Exception("attribute $endX must be used with node of type path or line");
-			}
-		}
-
-		function setAttr(sourceNode,sourceAttr,value){
-			
-			if(log) console.log("setting ",sourceNode.id,sourceAttr,value);
-
-			switch(sourceAttr){
-				case "$endX":
-					handleEndXOrEndY(sourceNode,true,value);
-					break;
-				case "$endY":
-					handleEndXOrEndY(sourceNode,false,value);
-					break;
-				case "$startX":
-					handleStartXOrStartY(sourceNode,true,value);
-					break;
-				case "$startY":
-					handleStartXOrStartY(sourceNode,false,value);
-					break;
-				default:
-					//width, height and everything else
-					sourceNode.setAttributeNS(null,sourceAttr,value);
-			}
+			};
 		}
 
 		function topoSortNodes(constraints){
@@ -170,7 +103,7 @@ define(["lib/svg"],
 
 			function unique(arr){
 				return arr.reduce(function(a,b){
-						return a.filter(function(nodeAttr){return nodeAttr.equals(b)}).length ? a : a.concat(b)},[]);
+						return a.filter(function(nodeAttr){return nodeAttr.equals(b);}).length ? a : a.concat(b);},[]);
 
 				/*
 				return arr.filter(function(nodeAttr){
@@ -192,9 +125,9 @@ define(["lib/svg"],
 							if(d.nodeAttrs.indexOf(undefined) !== -1){
 								debugger;
 							}
-							return d.nodeAttrs
-						}).reduce(flatten,[]))
-			}).reduce(flatten,[])
+							return d.nodeAttrs;
+						}).reduce(flatten,[]));
+			}).reduce(flatten,[]);
 
 			//eliminate duplicate nodes
 			nodes = unique(nodes);
@@ -213,7 +146,7 @@ define(["lib/svg"],
 				//.node
 			var edges = constraints.map(function(c){
 				return c.dest.
-					map(function(nae){return nae.nodeAttrs})	//so then we have NodeAttr[][]
+					map(function(nae){return nae.nodeAttrs;})	//so then we have NodeAttr[][]
 					.reduce(flatten,[])	//then we have NodeAttr[]
 					.map(function(d){
 						return {
@@ -222,8 +155,8 @@ define(["lib/svg"],
 							equals : function(node){
 								return this === node;
 							}
-						}
-					})
+						};
+					});
 			}).reduce(flatten,[]);
 
 			edges = edges.filter(function(edge){
@@ -232,7 +165,9 @@ define(["lib/svg"],
 				});
 
 			function printEdges(nodeList){
-				if(log) console.log("edges : ", nodeList.map(function(n){return "{" + n.source.toString() + "," + n.dest.toString() + "}"}).join(","))
+				/*jsl:ignore*/
+				if(log) console.log("edges : ", nodeList.map(function(n){return "{" + n.source.toString() + "," + n.dest.toString() + "}"}).join(","));
+				/*jsl:end*/
 			}
 		
 			printEdges(edges);
@@ -241,7 +176,9 @@ define(["lib/svg"],
 			var l = [];
 
 			function printNodes(title,nodeList){
-				if(log) console.log(title + " : ", nodeList.map(function(n){return n.toString()}).join(","))
+				/*jsl:ignore*/
+				if(log) console.log(title + " : ", nodeList.map(function(n){return n.toString()}).join(","));
+				/*jsl:end*/
 			}
 
 			printNodes("s",s);
@@ -259,12 +196,12 @@ define(["lib/svg"],
 
 					var edgesCorrespondingToThisNode = 
 						unique(
-							edges.filter(function(e){return e.source.equals(n)}));
+							edges.filter(function(e){return e.source.equals(n);}));
 
 					edgesCorrespondingToThisNode
-						.map(function(e){return e.dest})	
+						.map(function(e){return e.dest;})	
 						.forEach(function(destNode){
-							visit(destNode,nodesOnStack)});
+							visit(destNode,nodesOnStack);});
 
 					l.push(n);
 				}
@@ -306,21 +243,36 @@ define(["lib/svg"],
 								var destNode = destNodeAttr.node;
 								var destAttr = destNodeAttr.attr;
 
-								var bbox = svg.getBBoxInElementSpace(destNode,sourceNode);
-		
-								switch(destAttr){
-									case "x":
-										return bbox.x;
-									case "y":
-										return bbox.y;
-									case "width":
-										return bbox.width;
-									case "height":
-										return bbox.height;
-									case "bbox":
-										return bbox;
-									default:
-										return parseInt(destNode.getAttributeNS(null,destAttr)) || 0;
+								//FIXME: SVGLocatable would be more accurate and preferred, but the SVGLocatable interface is not currently exposed to js in chromium, possible other browsers as well
+								if(destNode instanceof Node){
+
+									//same thing here: SVGLocatable would be preferred
+									var bbox;
+									if(sourceNode instanceof Node){
+										bbox = svg.getBBoxInElementSpace(destNode,sourceNode); 
+									}else if(sourceNode.pathSegType){
+										bbox = svg.getBBoxInElementSpace(destNode,sourceNode.pathRef);
+									}else{
+										bbox = svg.getBBoxInCanvasSpace(destNode);
+									}
+			
+									switch(destAttr){
+										case "x":
+											return bbox.x;
+										case "y":
+											return bbox.y;
+										case "width":
+											return bbox.width;
+										case "height":
+											return bbox.height;
+										case "bbox":
+											return bbox;
+										default:
+											return parseInt(destNode.getAttributeNS(null,destAttr),10) || 0;
+									}
+								}else{
+									//assume it is some other kind of object, and access the value as a regular js property
+									return destNode[destAttr];
 								}
 							}); 
 
@@ -340,7 +292,17 @@ define(["lib/svg"],
 					
 					//constraintValue might return undefined, in which case we don't set it
 					if(constraintValue !== undefined){
-						setAttr(sourceNode,sourceAttr,constraintValue);
+
+						if(log) console.log("setting ",sourceNode.id,sourceAttr,constraintValue);
+
+						//width, height and everything else
+						//FIXME: see other note regarding SVGLocatable
+						if(sourceNode instanceof Node){
+							sourceNode.setAttributeNS(null,sourceAttr,constraintValue);
+						}else{
+							sourceNode[sourceAttr]=constraintValue;
+						}
+
 					}
 				});
 			});
@@ -352,14 +314,14 @@ define(["lib/svg"],
 			NodeAttrExpr : NodeAttrExpr,
 			NodeAttr : NodeAttr,
 			resolveGraphicalConstraints : function(constraints){
-				topoSortedNodes = topoSortNodes(constraints);
+				var topoSortedNodes = topoSortNodes(constraints);
 				if(log) console.log("topoSortedNodes",topoSortedNodes);
 				performTopoSort(topoSortedNodes,constraints);
 			},
 			sum : sum,
 			inc : inc,
 			dec : dec
-		}
+		};
 
 	}
 );
