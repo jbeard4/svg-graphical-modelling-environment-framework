@@ -1,5 +1,13 @@
 function init(evt) {     
 
+	if(window.console === undefined){
+		window.console = {
+			log : function(s){
+				//TODO: do something with s
+			}
+		};
+	}
+
 	var svgRoot = evt.target.ownerDocument.documentElement;
 
 	require(["c","lib/svg","behaviours",

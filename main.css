@@ -1,5 +1,5 @@
 line.edge,path.edge { 
-	marker-end: url(#Triangle);
+	marker-end: url(class_diagrams.svg#Triangle);
 	stroke: black; 
 	fill: none;
 }
