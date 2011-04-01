@@ -59,17 +59,17 @@ rect#dragging {
 
 .class-icon {
 	stroke : black;
-	fill : white;	/*TODO: gradient*/
+	fill : url(class_diagrams.svg#white-blue);
 }
 
 .package-icon {
 	stroke : black;
-	fill : white;	/*TODO: gradient*/
+	fill : url(class_diagrams.svg#white-blue);
 }
 
 .radio-button-group-icon {
 	stroke : black;
-	fill : white;	/*TODO: gradient*/
+	fill : url(class_diagrams.svg#white-grey);
 }
 
 .control-point-icon {
