@@ -1,6 +1,7 @@
-define(["c"],
+define(["c","behaviour/constructors/selectable"],
 
-	function(cm){
+
+	function(cm,setupSelectable){
 		return function(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout,resizable,setupDropTarget){
 			return function(x,y){
 
@@ -138,6 +139,7 @@ define(["c"],
 					ARROW_TARGET : true
 				};
 
+
 				//here we hook up appropriate events to elements with default behaviour
 				//what are appropriate events? we are defining these as we go...
 
@@ -150,6 +152,8 @@ define(["c"],
 								rightPadding:PACKAGE_RIGHT_PADDING,
 								minWidth:PACKAGE_MIN_WIDTH,
 								minHeight:PACKAGE_MIN_HEIGHT},true);
+
+				setupSelectable.call(icon);
 
 				requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 

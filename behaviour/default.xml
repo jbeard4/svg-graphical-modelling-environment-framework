@@ -15,6 +15,7 @@
 	</script>
 
 	<datamodel>
+		<data id="selectedIcons" expr="[]"/>
 		<data id="firstEvent"/>
 		<data id="eventStamp"/>
 		<data id="tDelta"/>
@@ -42,10 +43,12 @@
 				_event.data.currentTarget.behaviours[modules.behaviours.ARROW_SOURCE]">
 		</transition>
 
+		<!--
 		<transition event="mousedown" target="dragging"
 			cond="!(_event.data.domEvent.ctrlKey) &amp;&amp;
 				_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]">
 		</transition>
+		-->
 
 		<transition event="mousedown" target="editing_curve"
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_EDITABLE]">
@@ -59,7 +62,48 @@
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.TEXT_EDITABLE]">
 		</transition>
 
+		<transition event="mousedown" target="after_shift_mousedown_on_selectable"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.SELECTABLE] 
+					&amp;&amp; _event.data.domEvent.shiftKey"/>
+
+		<transition event="mousedown" target="after_regular_mousedown_on_selectable"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.SELECTABLE]"/>
 	</state>
+
+	
+	<state id="after_mousedown_on_selectable" initial="after_shift_mousedown_on_selectable">
+		<datamodel>
+			<data id="icon_being_selected"/>
+		</datamodel>
+
+		<onentry>
+			<assign location="icon_being_selected" expr="_event.data.currentTarget"/>
+		</onentry>
+
+		<state id="after_shift_mousedown_on_selectable">
+			<transition event="mouseup" target="idle">
+				<script>
+					icon_being_selected.select(selectedIcons);
+				</script>
+			</transition>
+		</state>
+
+		<state id="after_regular_mousedown_on_selectable">
+			<transition event="mouseup" target="idle">
+				<script>
+					selectedIcons.forEach(function(icon){
+						icon.deselect(selectedIcons);
+					});
+					icon_being_selected.select(selectedIcons);
+				</script>
+			</transition>
+		</state>
+
+		<transition event="mousemove" target="dragging"
+			cond="_event.data.currentTarget.behaviours[modules.behaviours.DRAGGABLE]"/>
+
+	</state>
+
 
 	<state id="after_mousedown_on_editable_text">
 		<datamodel>

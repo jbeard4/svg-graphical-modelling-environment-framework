@@ -1,5 +1,5 @@
-define(["c"],
-	function(cm){
+define(["c","behaviour/constructors/selectable"],
+	function(cm,setupSelectable){
 		return function(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout){
 			return function(x,y){
 				
@@ -181,6 +181,8 @@ define(["c"],
 				};
 
 				hookElementEventsToStatechart(icon,["mousedown","mouseup","mousemove","mouseover","mouseout"],true);
+
+				setupSelectable.call(icon);
 
 				requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 

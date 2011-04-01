@@ -86,3 +86,14 @@ rect#dragging {
 	fill : red;
 }
 
+.selectable {
+	cursor : pointer;
+}
+
+.class-icon.selected {
+	stroke : yellow;
+}
+
+.package-icon.selected {
+	stroke : yellow;
+}
