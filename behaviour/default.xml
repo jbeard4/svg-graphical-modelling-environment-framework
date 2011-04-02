@@ -61,6 +61,14 @@
 
 		<transition event="mousedown" target="after_regular_mousedown_on_selectable"
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.SELECTABLE]"/>
+
+		<transition event="mousedown" cond="_event.data.currentTarget === modules.canvas">
+			<script>
+				selectedIcons.slice().forEach(function(icon){
+					icon.deselect(selectedIcons);
+				});
+			</script>
+		</transition>
 	</state>
 
 	

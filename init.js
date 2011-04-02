@@ -10,7 +10,7 @@ function init(evt) {
 
 	var svgRoot = evt.target.ownerDocument.documentElement;
 
-	require(["c","lib/svg","behaviours",
+	require(["helpers","c","lib/svg","behaviours",
 			"behaviour/constructors/arrow-editable",
 			"behaviour/constructors/control-point-draggable",
 			"behaviour/constructors/draggable",
@@ -31,7 +31,7 @@ function init(evt) {
 			"build/default.js",
 			"batikCompatibility.js" ],
 
-		function(constraintModule,svgModule,behaviours,
+		function(h,constraintModule,svgModule,behaviours,
 				arrowEditable,
 				controlPointDraggable,
 				draggable,
@@ -124,6 +124,7 @@ function init(evt) {
 				modules:{
 					svgHelper:svgModule,
 					svg:svg,
+					canvas : svgRoot,
 					behaviours:behaviours,
 					constructors:{
 						CurveIcon : curveIconConstructor
@@ -187,7 +188,7 @@ function init(evt) {
 
 			//wrap the canvas in a nice object
 			//TODO: once again, I wonder if it would be better to, instead of relying on behaviours, just check for existence of representative functions, e.g. create()
-			var canvas = {
+			var canvasAPI = {
 				create : function(x,y){
 					//create whatever the radio buttons point to
 					var button = radioButtonGroup.getSelectedButton();
@@ -202,14 +203,12 @@ function init(evt) {
 				}
 			};
 
-			//hook up DOM events for svg root
-			["mousedown","mouseup","mousemove"].forEach(function(eventName){
-				svgRoot.addEventListener(eventName,function(e){
-					e.preventDefault();
-					compiledStatechartInstance[eventName]({domEvent:e,currentTarget:canvas});
-				},false);
-			});
+			h.mixin(canvasAPI,svgRoot);		
 
+			//hook up DOM events for svg root
+			hookElementEventsToStatechart (svgRoot,["mousedown","mouseup","mousemove"],false);
+
+			hookElementEventsToStatechart (rootRectDropTarget,["mousedown"],false);
 
 			/*
 			var g1 = constructors.ClassIcon(100,100);
