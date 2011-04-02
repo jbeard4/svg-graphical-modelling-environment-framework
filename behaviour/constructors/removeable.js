@@ -5,7 +5,7 @@ define(["helpers","behaviours"],
 				//remove all constraints where he is the source from the constraint graph
 				//his descendants too
 				//debugger;
-				console.log("removing",this);
+				//console.log("removing",this);
 
 				//first get his descendants
 				//any removable, call their remove method. assume this recursively removes them.
@@ -20,18 +20,18 @@ define(["helpers","behaviours"],
 
 				thisAndDescendants.forEach(function(node){ 
 
-					console.log("removing sub-node",node);
+					//console.log("removing sub-node",node);
 
 					//remove all splines which are attached to him from the constraint graph
 					var allSplinesInConstraintGraph = 
 						this.env.constraintGraph.filter(function(c){
 							//get all splines
-							console.log("c.source.node.pathSegType",c.source.node.pathSegType);
-							console.log("c.source.node.pathRef",c.source.node.pathRef);
+							//console.log("c.source.node.pathSegType",c.source.node.pathSegType);
+							//console.log("c.source.node.pathRef",c.source.node.pathRef);
 							return c.source.node.pathSegType && c.source.node.pathRef && c.source.node.pathRef.behaviours[behaviours.REMOVABLE]; 
 						});
 
-					console.log("allSplinesInConstraintGraph",allSplinesInConstraintGraph);
+					//console.log("allSplinesInConstraintGraph",allSplinesInConstraintGraph);
 
 					var splinesTargetingNode = 
 						allSplinesInConstraintGraph.filter(function(c){
@@ -45,7 +45,7 @@ define(["helpers","behaviours"],
 
 						});
 
-					console.log("splinesTargetingNode",splinesTargetingNode);
+					//console.log("splinesTargetingNode",splinesTargetingNode);
 
 					var splinesToRemove =
 						splinesTargetingNode.map(function(c){
@@ -55,7 +55,7 @@ define(["helpers","behaviours"],
 
 					var uniqueSplinesToRemove = h.unique(splinesToRemove);  
 
-					console.log("uniqueSplinesToRemove",uniqueSplinesToRemove);
+					//console.log("uniqueSplinesToRemove",uniqueSplinesToRemove);
 
 					uniqueSplinesToRemove.forEach(function(spline){spline.remove();}); 
 
@@ -66,7 +66,7 @@ define(["helpers","behaviours"],
 							|| (c.source.node.pathRef && c.source.node.pathRef === node);
 					});
 
-					console.log("constraintsWithThisAsSource",constraintsWithThisAsSource);
+					//console.log("constraintsWithThisAsSource",constraintsWithThisAsSource);
 
 					constraintsWithThisAsSource.forEach(function(c){
 						h.removeFromList(c,this.env.constraintGraph);
@@ -83,7 +83,7 @@ define(["helpers","behaviours"],
 											|| (nodeAttr.node.pathRef && nodeAttr.node.pathRef === node);
 									});
 
-							console.log("nodeAttrsToRemove",nodeAttrsToRemove);
+							//console.log("nodeAttrsToRemove",nodeAttrsToRemove);
 							nodeAttrsToRemove.forEach(function(na){
 								h.removeFromList(na,nodeAttrExpr.nodeAttrs);
 							}); 
@@ -93,7 +93,7 @@ define(["helpers","behaviours"],
 						var destsToRemove = c.dest.filter(function(nodeAttrExpr){
 							return !nodeAttrExpr.nodeAttrs.length;
 						});
-						console.log("destsToRemove",destsToRemove); 
+						//console.log("destsToRemove",destsToRemove); 
 						destsToRemove.forEach(function(dest){
 							h.removeFromList(dest,c.dest);
 						});
@@ -104,14 +104,15 @@ define(["helpers","behaviours"],
 						return !c.dest.length;
 					},this);
 
-					console.log("constraintsToRemove",constraintsToRemove); 
+					//console.log("constraintsToRemove",constraintsToRemove); 
 					constraintsToRemove.forEach(function(c){
 						h.removeFromList(c,this.env.constraintGraph);
 					},this);
 				},this);
 
 				//remove him from dom
-				this.parentNode.removeChild(this);
+				//we guard here, because in the case where we have multiple levels of hierarchy, it's posisble that a child of this icon will have already deleted his child
+				if(this.parentNode) this.parentNode.removeChild(this);
 			}
 		};
 
