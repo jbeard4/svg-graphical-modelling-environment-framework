@@ -83,8 +83,7 @@
 		<state id="after_shift_mousedown_on_selectable">
 			<transition event="mouseup" target="idle">
 				<script>
-					icon_being_selected.select();
-					selectedIcons.push(icon_being_selected);
+					icon_being_selected.select(selectedIcons);
 				</script>
 			</transition>
 		</state>
@@ -92,12 +91,10 @@
 		<state id="after_regular_mousedown_on_selectable">
 			<transition event="mouseup" target="idle">
 				<script>
-					//debugger;
-					selectedIcons.forEach(function(icon){
-						icon.deselect();
+					selectedIcons.slice().forEach(function(icon){
+						icon.deselect(selectedIcons);
 					});
-					icon_being_selected.select();
-					selectedIcons = [icon_being_selected];
+					icon_being_selected.select(selectedIcons);
 				</script>
 			</transition>
 		</state>
