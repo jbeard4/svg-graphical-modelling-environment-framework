@@ -62,13 +62,67 @@
 		<transition event="mousedown" target="after_regular_mousedown_on_selectable"
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.SELECTABLE]"/>
 
-		<transition event="mousedown" cond="_event.data.currentTarget === modules.canvas">
-			<script>
-				selectedIcons.slice().forEach(function(icon){
-					icon.deselect(selectedIcons);
-				});
-			</script>
-		</transition>
+		<transition event="mousedown"  target="after_mousedown_on_canvas"
+			cond="_event.data.currentTarget === modules.canvas"/>
+	</state>
+
+	<state id="after_mousedown_on_canvas" initial="after_mousedown_on_canvas_before_mousemove">
+		<state id="after_mousedown_on_canvas_before_mousemove">
+			<transition event="mouseup" target="idle">
+				<script>
+					selectedIcons.slice().forEach(function(icon){
+						icon.deselect(selectedIcons);
+					});
+				</script>
+			</transition>
+			
+			<transition event="mousemove" target="after_mousedown_on_canvas_after_mousemove"/>
+		</state>
+
+		<state id="after_mousedown_on_canvas_after_mousemove">
+			<datamodel>
+				<data id="marquee"/>
+			</datamodel>
+
+			<onentry>
+				<assign location="marquee" expr="modules.svg.rect(_event.data.domEvent.clientX,_event.data.domEvent.clientY,1,1)"/>
+				<script>
+					marquee.id = "marquee";
+				</script>
+				<assign location="eventStamp" expr="_event.data.domEvent"/>
+			</onentry>
+
+			<onexit>
+				<script>
+					//deselect all icons
+					selectedIcons.slice().forEach(function(icon){icon.deselect(selectedIcons)});
+
+					//select new icons
+					var elementsToSelect = modules.canvas.getEnclosureList2(marquee.getBBox(),".selectable");
+					elementsToSelect.forEach(function(element){
+						element.select(selectedIcons);
+					});
+
+					//remove marquee
+					marquee.parentNode.removeChild(marquee);
+				</script>
+			</onexit>
+			
+			<transition event="mousemove">
+				<!-- draw marquee --> 
+				<assign location="tDelta" expr="computeTDelta(eventStamp,_event.data.domEvent)"/>
+				<script>
+					//debugger;
+					//update marquee based on tdelta
+					marquee.width.baseVal.value += tDelta.dx;
+					marquee.height.baseVal.value += tDelta.dy;
+				</script>
+				<assign location="eventStamp" expr="_event.data.domEvent"/>
+			</transition>
+			
+			<transition event="mouseup" target="idle"/>
+		</state>
+		
 	</state>
 
 	

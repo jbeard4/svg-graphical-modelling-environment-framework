@@ -200,6 +200,15 @@ function init(evt) {
 				},
 				behaviours : {
 					CREATOR : true
+				},
+					
+				getEnclosureList2 : function(rect,query){
+					var elements = Array.prototype.slice.call(document.querySelectorAll(query));
+					console.log("all selectable elements",  elements);
+					return elements.filter(function(element){
+						return svgModule.contains(
+							rect, svgModule.getBBoxInCanvasSpace(element));
+					});
 				}
 			};
 

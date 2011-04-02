@@ -10,7 +10,7 @@ text {
 	dominant-baseline : hanging;
 }
 
-rect#dragging {
+rect#dragging,rect#marquee {
 	fill : none;
 	stroke : black;
 	stroke-dasharray : 1;
