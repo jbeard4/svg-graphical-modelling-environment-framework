@@ -1,27 +1,26 @@
 define(
-	function(){		
-		return function(svg,edgeLayer,setupDrawPath,setupArrowEditorBehaviour){
-			return function(source,x,y){
-				x = x || 0;
-				y = y || 0;
+	["behaviour/constructors/path-drawable","behaviour/constructors/arrow-editable"],
+	function(setupDrawPath,setupArrowEditorBehaviour){		
+		return function(env,source,x,y){
+			x = x || 0;
+			y = y || 0;
 
-				//TODO: make the irst icon expose a nice API like this...
-				//TODO: maybe use API to encode behaviour tags?
+			//TODO: make the irst icon expose a nice API like this...
+			//TODO: maybe use API to encode behaviour tags?
 
-				//create the group and the path
-				//also the source... with the second drop?
-				//return the group
-				var p = svg.createPath();
-				var path = svg.path(edgeLayer,p.move(x,y).line(x+1,y+1));
+			//create the group and the path
+			//also the source... with the second drop?
+			//return the group
+			var p = env.svg.createPath();
+			var path = env.svg.path(env.edgeLayer,p.move(x,y).line(x+1,y+1));
 
-				$(path).addClass("edge-icon");
+			$(path).addClass("edge-icon");
 
-				//set up behaviour interface and data
-				setupDrawPath.call(path,source);
-				setupArrowEditorBehaviour.call(path);
+			//set up behaviour interface and data
+			setupDrawPath.call(path,env,source);
+			setupArrowEditorBehaviour.call(path,env);
 
-				return path;
-			};
+			return path;
 		};
 	}
 );

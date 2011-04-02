@@ -63,7 +63,7 @@
 			cond="_event.data.currentTarget.behaviours[modules.behaviours.SELECTABLE]"/>
 
 		<transition event="mousedown"  target="after_mousedown_on_canvas"
-			cond="_event.data.currentTarget === modules.canvas"/>
+			cond="_event.data.currentTarget === modules.env.canvas"/>
 	</state>
 
 	<state id="after_mousedown_on_canvas" initial="after_mousedown_on_canvas_before_mousemove">
@@ -85,7 +85,7 @@
 			</datamodel>
 
 			<onentry>
-				<assign location="marquee" expr="modules.svg.rect(_event.data.domEvent.clientX,_event.data.domEvent.clientY,1,1)"/>
+				<assign location="marquee" expr="modules.env.svg.rect(_event.data.domEvent.clientX,_event.data.domEvent.clientY,1,1)"/>
 				<script>
 					marquee.id = "marquee";
 				</script>
@@ -98,7 +98,7 @@
 					selectedIcons.slice().forEach(function(icon){icon.deselect(selectedIcons)});
 
 					//select new icons
-					var elementsToSelect = modules.canvas.getEnclosureList2(marquee.getBBox(),".selectable");
+					var elementsToSelect = modules.env.canvas.getEnclosureList2(marquee.getBBox(),".selectable");
 					elementsToSelect.forEach(function(element){
 						element.select(selectedIcons);
 					});
@@ -189,7 +189,7 @@
 				if(newText &amp;&amp; newText.length){
 					textBeingEdited.textContent = newText;
 				}
-				modules.requestLayout();
+				modules.env.requestLayout();
 			</script>
 		</transition>
 	</state>
@@ -206,7 +206,7 @@
 
 		<onexit>
 			<script>
-				modules.requestLayout();
+				modules.env.requestLayout();
 			</script>
 		</onexit>
 
@@ -289,8 +289,8 @@
 				<onentry>
 					<script>
 						//create new line segment on the currentTarget
-						curveBeingDrawn = modules.constructors.CurveIcon(_event.data.currentTarget);
-						modules.requestLayout();
+						curveBeingDrawn = modules.constructors.CurveIcon(modules.env,_event.data.currentTarget);
+						modules.env.requestLayout();
 					</script>
 				</onentry>
 
@@ -322,7 +322,7 @@
 					<script>
 						//snap to target
 						curveBeingDrawn.setTarget(_event.data.currentTarget);
-						modules.requestLayout();
+						modules.env.requestLayout();
 					</script>
 				</transition>
 
@@ -419,7 +419,7 @@
 				var bbox = modules.svgHelper.getAggregateBBoxInCanvasSpace(selectedIcons);
 				console.log(bbox);
 
-				draggingRect = 	modules.svg.rect(bbox.x,bbox.y,bbox.width,bbox.height);
+				draggingRect = 	modules.env.svg.rect(bbox.x,bbox.y,bbox.width,bbox.height);
 				draggingRect.id="dragging";
 
 				console.log(draggingRect);
@@ -432,7 +432,7 @@
 			<script>
 				//update the locations of the dragged entities 
 				//TODO: make this all selected entities
-				modules.svg.remove(draggingRect);
+				modules.env.svg.remove(draggingRect);
 
 				tDelta = computeTDelta(firstEvent,_event.data.domEvent)
 
@@ -441,7 +441,7 @@
 					modules.svgHelper.translate(draggingEntity,tDelta.dx,tDelta.dy);
 				});
 
-				modules.requestLayout();
+				modules.env.requestLayout();
 			</script>
 		</onexit>
 

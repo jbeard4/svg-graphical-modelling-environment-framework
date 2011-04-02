@@ -11,18 +11,9 @@ function init(evt) {
 	var svgRoot = evt.target.ownerDocument.documentElement;
 
 	require(["helpers","c","lib/svg","behaviours",
-			"behaviour/constructors/arrow-editable",
-			"behaviour/constructors/control-point-draggable",
-			"behaviour/constructors/draggable",
 			"behaviour/constructors/drop-targetable",
-			"behaviour/constructors/end-point-draggable",
-			"behaviour/constructors/highlightable",
-			"behaviour/constructors/path-drawable",
-			"behaviour/constructors/resizable",
 			"icons/class",
-			"icons/control-point",
 			"icons/curve",
-			"icons/end-point",
 			"icons/package",
 			"icons/radio-button-group",
 
@@ -31,19 +22,13 @@ function init(evt) {
 			"build/default.js",
 			"batikCompatibility.js" ],
 
-		function(h,constraintModule,svgModule,behaviours,
-				arrowEditable,
-				controlPointDraggable,
-				draggable,
+		function(h,
+				constraintModule,
+				svgModule,
+				behaviours,
 				dropTargetable,
-				endPointDraggable,
-				highlightable,
-				pathDrawable,
-				resizable,
 				classIcon,
-				controlPointIcon,
 				curveIcon,
-				endPointIcon,
 				packageIcon,
 				radioButtonGroupIcon){
 
@@ -67,8 +52,6 @@ function init(evt) {
 				constraintModule.resolveGraphicalConstraints(constraintGraph);
 			}
 
-
-
 			//hook up behaviour
 			var compiledStatechartInstance = new StatechartExecutionContext(); 
 
@@ -89,32 +72,29 @@ function init(evt) {
 				});
 			}
 
-			//bootstrap constructors
-			var classIconConstructor = classIcon(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout),
-				controlPointDraggableConstructor = controlPointDraggable(hookElementEventsToStatechart),
-				controlPointIconConstructor = controlPointIcon(svg,controlLayer,constraintGraph,controlPointDraggableConstructor),
-				endPointDraggableConstructor = endPointDraggable(hookElementEventsToStatechart),
-				endPointIconConstructor = endPointIcon(svg,controlLayer,endPointDraggableConstructor),
-				radioButtonGroupConstructor = radioButtonGroupIcon (svg,nodeLayer,constraintGraph,requestLayout),
-				dropTargetableConstructor = dropTargetable(constraintGraph,hookElementEventsToStatechart),
-				arrowEditableConstructor = arrowEditable(endPointIconConstructor,controlPointIconConstructor,hookElementEventsToStatechart),
-				pathDrawableConstructor = pathDrawable(constraintGraph),
-				resizableConstructor = resizable(hookElementEventsToStatechart),
-				packageIconConstructor = packageIcon(svg,nodeLayer,constraintGraph,hookElementEventsToStatechart,requestLayout,resizableConstructor,dropTargetableConstructor),
-				curveIconConstructor = curveIcon(svg,edgeLayer,pathDrawableConstructor,arrowEditableConstructor);
-
+			var env = {
+				svg:svg,
+				nodeLayer:nodeLayer,
+				edgeLayer:edgeLayer,
+				controlLayer:controlLayer,
+				constraintGraph:constraintGraph,
+				hookElementEventsToStatechart:hookElementEventsToStatechart,
+				requestLayout:requestLayout,
+				canvas:svgRoot
+			};
 			
 
 			//setup canvas as a drop target
 
-			dropTargetableConstructor(rootRectDropTarget,
-								nodeLayer,
-								{topPadding:10,
-									bottomPadding:10,
-									leftPadding:10,
-									rightPadding:10,
-									minWidth:10,
-									minHeight:10});
+			dropTargetable(env,
+					rootRectDropTarget,
+					nodeLayer,
+					{topPadding:10,
+						bottomPadding:10,
+						leftPadding:10,
+						rightPadding:10,
+						minWidth:10,
+						minHeight:10});
 
 			//initialize
 			compiledStatechartInstance.initialize();
@@ -123,14 +103,11 @@ function init(evt) {
 				controller:{},
 				modules:{
 					svgHelper:svgModule,
-					svg:svg,
-					canvas : svgRoot,
+					env:env,
 					behaviours:behaviours,
 					constructors:{
-						CurveIcon : curveIconConstructor
-					},
-					constraintGraph:constraintGraph,
-					requestLayout:requestLayout
+						CurveIcon : curveIcon
+					}
 				}});
 
 			//for now, it only makes sense to use keydown
@@ -182,9 +159,9 @@ function init(evt) {
 			
 			//create a radio button group. associate this to the canvas
 
-			var radioButtonGroup = radioButtonGroupConstructor(10,10);
-			radioButtonGroup.createButton("Class",classIconConstructor); 
-			radioButtonGroup.createButton("Package",packageIconConstructor); 
+			var radioButtonGroup = radioButtonGroupIcon(env,10,10);
+			radioButtonGroup.createButton("Class",classIcon); 
+			radioButtonGroup.createButton("Package",packageIcon); 
 
 			//wrap the canvas in a nice object
 			//TODO: once again, I wonder if it would be better to, instead of relying on behaviours, just check for existence of representative functions, e.g. create()
@@ -194,7 +171,7 @@ function init(evt) {
 					var button = radioButtonGroup.getSelectedButton();
 					if(button){
 						var constructor = button.getIconConstructor();
-						constructor(x,y);
+						constructor(env,x,y);
 					}
 					
 				},
