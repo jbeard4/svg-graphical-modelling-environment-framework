@@ -56,6 +56,9 @@ define(
 
 					addPathRefToSegment(path,seg);
 				} 
+			},
+			unique : function(l){
+				return l.reduce(function(a,b){return a.indexOf(b) === -1 ? a.concat(b) : a;},[]);
 			}
 		};
 	}

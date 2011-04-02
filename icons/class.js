@@ -1,5 +1,6 @@
-define(["c","behaviour/constructors/selectable"],
-	function(cm,setupSelectable){
+define(	
+	["c","behaviour/constructors/selectable","behaviour/constructors/removeable"],
+	function(cm,setupSelectable,setupRemoveable){
 		return function(env,x,y){
 			
 			var icon = env.svg.group(env.nodeLayer);
@@ -182,8 +183,10 @@ define(["c","behaviour/constructors/selectable"],
 			env.hookElementEventsToStatechart(icon,["mousedown","mouseup","mousemove","mouseover","mouseout"],true);
 
 			setupSelectable.call(icon);
+			setupRemoveable.call(icon,env);
 
 			env.requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
+
 
 			icon.contains = function(shape){
 				//this isn't strictly correct. we should keep an array of subentities

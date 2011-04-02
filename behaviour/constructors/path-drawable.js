@@ -25,12 +25,17 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 				var n = this.createSVGPathSegCurvetoQuadraticAbs(x,y,x1,y1);
 				this.pathSegList.appendItem(n);
 
+				h.addPathRefToSegment(this,n);
+
 				return n;
 			},
 
 			createNewLineSegment : function (x,y){
 				var n = this.createSVGPathSegLinetoAbs(x,y);
 				this.pathSegList.appendItem(n);
+
+				h.addPathRefToSegment(this,n);
+
 				return n;
 			},
 
@@ -47,6 +52,8 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 						newSeg = this.createSVGPathSegCurvetoQuadraticAbs(endSeg.x,endSeg.y,x,y);
 						segList.replaceItem(newSeg,numItems-1); 
 
+						h.addPathRefToSegment(this,newSeg);
+
 					}
 					else if(endSeg.x2 === undefined && endSeg.x1 !== undefined){
 						//upgrade him to a cubic
@@ -54,6 +61,8 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 						//var newSegY2 = y + 2*( endSeg.y1 - y );
 						newSeg = this.createSVGPathSegCurvetoCubicAbs(endSeg.x,endSeg.y,endSeg.x1,endSeg.y1,x,y);
 						segList.replaceItem(newSeg,numItems-1);
+
+						h.addPathRefToSegment(this,newSeg);
 					}
 				}
 			},
@@ -105,11 +114,6 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 				var endSeg = segList.getItem(numItems-1);
 				var startSeg = segList.getItem(0);
 				var segAfterStartSeg = segList.getItem(1);
-
-				//add backward refs to path so that we can run layout on him
-				[startSeg,endSeg].forEach(function(seg){
-					h.addPathRefToEachSegment(this,seg);
-				},this);
 				
 				var getConstraintFunction;
 				if(numItems > 2 || segAfterStartSeg.x1 !== undefined){
@@ -307,9 +311,6 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 			var segList = this.pathSegList;
 			var numItems = segList.numberOfItems;
 			var startSeg = segList.getItem(0);
-
-			//add path refs to this segment so that we can run layout on him
-			h.addPathRefToEachSegment(this,startSeg);
 
 			this.originalSourceConstraintX = this.sourceConstraintX = 
 				cm.Constraint(

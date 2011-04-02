@@ -64,6 +64,16 @@
 
 		<transition event="mousedown"  target="after_mousedown_on_canvas"
 			cond="_event.data.currentTarget === modules.env.canvas"/>
+
+		<transition event="delete">
+			<script>
+				selectedIcons.slice().forEach(function(icon){
+					//unselect, then remove him
+					icon.deselect(selectedIcons);
+					icon.remove();
+				});
+			</script>
+		</transition>
 	</state>
 
 	<state id="after_mousedown_on_canvas" initial="after_mousedown_on_canvas_before_mousemove">

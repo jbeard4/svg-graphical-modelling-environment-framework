@@ -2,9 +2,10 @@ define(
 	["c",
 		"behaviour/constructors/selectable",
 		"behaviour/constructors/resizable",
-		"behaviour/constructors/drop-targetable"],
+		"behaviour/constructors/drop-targetable",
+		"behaviour/constructors/removeable"],
 
-	function(cm,setupSelectable,resizable,setupDropTarget){
+	function(cm,setupSelectable,resizable,setupDropTarget,setupRemoveable){
 		return function(env,x,y){
 
 			var PACKAGE_MIN_WIDTH = 100, 
@@ -156,6 +157,7 @@ define(
 							minHeight:PACKAGE_MIN_HEIGHT},true);
 
 			setupSelectable.call(icon,env);
+			setupRemoveable.call(icon,env);
 
 			env.requestLayout();	//FIXME: maybe we would want to pass in a delta of the stuff that changed?
 
