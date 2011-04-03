@@ -1,6 +1,10 @@
 define(
-	["helpers","behaviour/constructors/path-drawable","behaviour/constructors/arrow-editable","behaviour/constructors/removeable"],
-	function(h,setupDrawPath,setupArrowEditorBehaviour,setupRemoveable){		
+	["helpers",
+		"behaviour/constructors/path-drawable",
+		"behaviour/constructors/arrow-editable",
+		"behaviour/constructors/removeable"],
+
+	function(h,setupDrawPath,setupArrowEditorBehaviour,setupRemoveable){
 		return function(env,source,x,y){
 			x = x || 0;
 			y = y || 0;

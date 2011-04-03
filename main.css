@@ -26,7 +26,6 @@ rect#dragging,rect#marquee {
 .highlightable {
 }
 
-
 .resizable-e {
 	cursor : e-resize;
 }
@@ -40,7 +39,7 @@ rect#dragging,rect#marquee {
 }
 
 .control {
-	opacity : 0;
+	opacity : 1;
 	stroke-width : 10;
 	stroke:red;
 }
@@ -56,6 +55,10 @@ rect#dragging,rect#marquee {
 }
 
 .drop-target {
+}
+
+path.highlighted.drop-target.control {
+	opacity : .5;
 }
 
 .path-drawable {

@@ -248,6 +248,7 @@
 		<onexit>
 			<script>
 				curveBeingEdited.hideControlPoints(); 
+				modules.env.requestLayout();
 			</script>
 		</onexit>
 
@@ -265,6 +266,7 @@
 		</state>
 
 		<state id="dragging_control_point">
+
 			<transition event="mouseup" target="before_mousedown_on_control_point"/>
 
 			<transition event="mousemove">

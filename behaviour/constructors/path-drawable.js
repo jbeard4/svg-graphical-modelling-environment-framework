@@ -104,8 +104,8 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 				//create a thick path, which the user will interact with
 				this.thickPath = this.path.cloneNode(true);
 				$(this.thickPath).removeClass("marker");
-				h.addPathRefToEachSegment(this.thickPath); 
 				$(this.thickPath).addClass("control");
+				h.addPathRefToEachSegment(this.thickPath); 
 				this.appendChild(this.thickPath); 
 
 				this.thickPathBindingConstraints = [];
@@ -118,36 +118,36 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 					if(pathSeg.x2 !== undefined){
 						this.thickPathBindingConstraints.push(
 							cm.Constraint(
-								cm.NodeAttr(pathSeg,"x2"),
-								cm.NodeAttrExpr(thickPathSeg,"x2")
+								cm.NodeAttr(thickPathSeg,"x2"),
+								cm.NodeAttrExpr(pathSeg,"x2")
 							),
 							cm.Constraint(
-								cm.NodeAttr(pathSeg,"y2"),
-								cm.NodeAttrExpr(thickPathSeg,"y2")
+								cm.NodeAttr(thickPathSeg,"y2"),
+								cm.NodeAttrExpr(pathSeg,"y2")
 							)
 						);
 					}
 					if(pathSeg.x1 !== undefined){
 						this.thickPathBindingConstraints.push(
 							cm.Constraint(
-								cm.NodeAttr(pathSeg,"x1"),
-								cm.NodeAttrExpr(thickPathSeg,"x1")
+								cm.NodeAttr(thickPathSeg,"x1"),
+								cm.NodeAttrExpr(pathSeg,"x1")
 							),
 							cm.Constraint(
-								cm.NodeAttr(pathSeg,"y1"),
-								cm.NodeAttrExpr(thickPathSeg,"y1")
+								cm.NodeAttr(thickPathSeg,"y1"),
+								cm.NodeAttrExpr(pathSeg,"y1")
 							)
 						);
 					}
 					if(pathSeg.x !== undefined){
 						this.thickPathBindingConstraints.push(
 							cm.Constraint(
-								cm.NodeAttr(pathSeg,"x"),
-								cm.NodeAttrExpr(thickPathSeg,"x")
+								cm.NodeAttr(thickPathSeg,"x"),
+								cm.NodeAttrExpr(pathSeg,"x")
 							),
 							cm.Constraint(
-								cm.NodeAttr(pathSeg,"y"),
-								cm.NodeAttrExpr(thickPathSeg,"y")
+								cm.NodeAttr(thickPathSeg,"y"),
+								cm.NodeAttrExpr(pathSeg,"y")
 							)
 						);
 					}
@@ -183,7 +183,7 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 				},this);
 
 				
-				var segList = this.thickPath.pathSegList;
+				var segList = this.path.pathSegList;
 				var numItems = segList.numberOfItems;
 				var endSeg = segList.getItem(numItems-1);
 				var startSeg = segList.getItem(0);

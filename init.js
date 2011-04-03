@@ -59,7 +59,7 @@ function init(evt) {
 
 			function hookElementEventsToStatechart (element,events,stopPropagation){
 				events.forEach(function(eventName){
-					element.addEventListener(eventName,function(e){
+					element["on" + eventName] = function(e){
 						//console.log(element,eventName);
 						e.preventDefault();
 
@@ -68,7 +68,7 @@ function init(evt) {
 						//FIXME: this is interesting. in order to not conflict with drag-and-drop behaviour (parent has arrow target), we need to not stop event propagation. when generating the environment, we will need to determine the strict conditions that require us to stop event propagation, or not
 						//e.stopPropagation();	
 						compiledStatechartInstance[eventName]({domEvent:e,currentTarget:element});
-					},false);
+					};
 				});
 			}
 
