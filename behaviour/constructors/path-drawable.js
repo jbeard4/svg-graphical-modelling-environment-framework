@@ -1,19 +1,19 @@
-define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
+define(["helpers","c","behaviour/constructors/arrow-editable","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 
-	function(h,cm){
+	function(h,cm,setupArrowEditorBehaviour){
 		//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
 		var drawPathBehaviourAPI = {
 
 			willPathBeEmptyAfterRemovingNextPoint : function (){
-				return this.pathSegList.numberOfItems==2;	
+				return this.path.pathSegList.numberOfItems==2;	
 			},
 
 			rollbackPoint : function (){
-				this.pathSegList.removeItem(this.pathSegList.numberOfItems-2);
+				this.path.pathSegList.removeItem(this.path.pathSegList.numberOfItems-2);
 			},
 
 			setEndPoint : function (x,y){
-				var segList = this.pathSegList;
+				var segList = this.path.pathSegList;
 				var numItems = segList.numberOfItems;
 				var endSeg = segList.getItem(numItems-1);
 
@@ -22,25 +22,25 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 			},
 
 			createNewQuadraticSegment : function (x,y,x1,y1){
-				var n = this.createSVGPathSegCurvetoQuadraticAbs(x,y,x1,y1);
-				this.pathSegList.appendItem(n);
+				var n = this.path.createSVGPathSegCurvetoQuadraticAbs(x,y,x1,y1);
+				this.path.pathSegList.appendItem(n);
 
-				h.addPathRefToSegment(this,n);
+				h.addPathRefToSegment(this.path,n);
 
 				return n;
 			},
 
 			createNewLineSegment : function (x,y){
-				var n = this.createSVGPathSegLinetoAbs(x,y);
-				this.pathSegList.appendItem(n);
+				var n = this.path.createSVGPathSegLinetoAbs(x,y);
+				this.path.pathSegList.appendItem(n);
 
-				h.addPathRefToSegment(this,n);
+				h.addPathRefToSegment(this.path,n);
 
 				return n;
 			},
 
 			addControlPoint : function (x,y,mirror){
-				var segList = this.pathSegList;
+				var segList = this.path.pathSegList;
 				var numItems = segList.numberOfItems;
 				var endSeg = segList.getItem(numItems-1);
 				var newSeg;
@@ -49,26 +49,26 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 				if(numItems > 1){
 					if(endSeg.x2 === undefined && endSeg.x1 === undefined){
 						//upgrade him to a quadratic
-						newSeg = this.createSVGPathSegCurvetoQuadraticAbs(endSeg.x,endSeg.y,x,y);
+						newSeg = this.path.createSVGPathSegCurvetoQuadraticAbs(endSeg.x,endSeg.y,x,y);
 						segList.replaceItem(newSeg,numItems-1); 
 
-						h.addPathRefToSegment(this,newSeg);
+						h.addPathRefToSegment(this.path,newSeg);
 
 					}
 					else if(endSeg.x2 === undefined && endSeg.x1 !== undefined){
 						//upgrade him to a cubic
 						//var newSegX2 = x + 2*( endSeg.x1 - x );
 						//var newSegY2 = y + 2*( endSeg.y1 - y );
-						newSeg = this.createSVGPathSegCurvetoCubicAbs(endSeg.x,endSeg.y,endSeg.x1,endSeg.y1,x,y);
+						newSeg = this.path.createSVGPathSegCurvetoCubicAbs(endSeg.x,endSeg.y,endSeg.x1,endSeg.y1,x,y);
 						segList.replaceItem(newSeg,numItems-1);
 
-						h.addPathRefToSegment(this,newSeg);
+						h.addPathRefToSegment(this.path,newSeg);
 					}
 				}
 			},
 			setLastControlPoint : function(x,y,mirror){
 				//get the last control point
-				var segList = this.pathSegList;
+				var segList = this.path.pathSegList;
 				var numItems = segList.numberOfItems;
 				var endSeg = segList.getItem(numItems-1);
 
@@ -101,6 +101,81 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 			},
 			setTarget : function(target){
 
+				//create a thick path, which the user will interact with
+				this.thickPath = this.path.cloneNode(true);
+				$(this.thickPath).removeClass("marker");
+				h.addPathRefToEachSegment(this.thickPath); 
+				$(this.thickPath).addClass("control");
+				setupArrowEditorBehaviour.call(this.thickPath,this.env);
+				this.appendChild(this.thickPath); 
+
+				this.thickPathBindingConstraints = [];
+
+				//bind path to thickpath
+				for(var i=0, l=this.path.pathSegList.numberOfItems; i < l;i++){
+					var pathSeg = this.path.pathSegList.getItem(i);
+					var thickPathSeg = this.thickPath.pathSegList.getItem(i);
+					
+					if(pathSeg.x2 !== undefined){
+						this.thickPathBindingConstraints.push(
+							cm.Constraint(
+								cm.NodeAttr(pathSeg,"x2"),
+								cm.NodeAttrExpr(thickPathSeg,"x2")
+							),
+							cm.Constraint(
+								cm.NodeAttr(pathSeg,"y2"),
+								cm.NodeAttrExpr(thickPathSeg,"y2")
+							)
+						);
+					}
+					if(pathSeg.x1 !== undefined){
+						this.thickPathBindingConstraints.push(
+							cm.Constraint(
+								cm.NodeAttr(pathSeg,"x1"),
+								cm.NodeAttrExpr(thickPathSeg,"x1")
+							),
+							cm.Constraint(
+								cm.NodeAttr(pathSeg,"y1"),
+								cm.NodeAttrExpr(thickPathSeg,"y1")
+							)
+						);
+					}
+					if(pathSeg.x !== undefined){
+						this.thickPathBindingConstraints.push(
+							cm.Constraint(
+								cm.NodeAttr(pathSeg,"x"),
+								cm.NodeAttrExpr(thickPathSeg,"x")
+							),
+							cm.Constraint(
+								cm.NodeAttr(pathSeg,"y"),
+								cm.NodeAttrExpr(thickPathSeg,"y")
+							)
+						);
+					}
+				}
+
+				console.log("this.thickPathBindingConstraints",this.thickPathBindingConstraints);
+
+				this.thickPathBindingConstraints.forEach(function(c){
+					this.env.constraintGraph.push(c);
+				},this);
+
+				/*
+				//TODO: another possibility is to cheat and just mind to "d" attr
+				//we would need to make our constraint solver smarter for that though
+				//it would need to know that "d" means having a dependency on all attributes of all segment nodes
+				//if we were to just use "d" without changing the constraint solver, then the topo sort would not work correctly.
+				this.thickPathBindingConstraint = 
+					cm.Constraint(
+						cm.NodeAttr(this.path,"d"),
+						cm.NodeAttrExpr(this.thickPath,"d")
+					);
+
+				this.env.constraintGraph.push(this.thickPathBindingConstraint);
+				*/
+
+				//now we set constraints on thickPath
+
 				//set up the constraint graph for the target
 
 				//remove and update sourceConstraintX and sourceConstraintY to avoid arrow occlusion 
@@ -109,7 +184,7 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 				},this);
 
 				
-				var segList = this.pathSegList;
+				var segList = this.thickPath.pathSegList;
 				var numItems = segList.numberOfItems;
 				var endSeg = segList.getItem(numItems-1);
 				var startSeg = segList.getItem(0);
@@ -288,27 +363,39 @@ define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 								this.targetConstraintY);
 				}
 			},
-			remove : function(){
-				//remove self from dom
-				this.parentNode.removeChild(this);
+			unsetTarget : function(){
 				
-				//remove constraints
-				[this.sourceConstraintX,this.sourceConstraintY,this.targetConstraintX,this.targetConstraintY].forEach(function(c){
+				this.thickPath.parentNode.removeChild(this.thickPath);
+
+				var constraintsToRemove = 
+					this.thickPathBindingConstraints.concat([
+						this.sourceConstraintX,
+						this.sourceConstraintY,
+						this.targetConstraintX,
+						this.targetConstraintY]);
+
+				constraintsToRemove.forEach(function(c){
 					h.removeFromList(c,this.env.constraintGraph);
 				},this);
+
+				//putt original source constraints back in the graph
+				this.sourceConstraintX = this.originalSourceConstraintX;
+				this.sourceConstraintY = this.originalSourceConstraintY;
+				this.env.constraintGraph.push(this.originalSourceConstraintX,this.originalSourceConstraintY);
 
 			}
 		};
 
-		function setupDrawPath(env,source){
+		function setupDrawPath(env,source,path){
 
 			this.env = env;
 
 			$(source).addClass("path-drawable");
 
 			this.source = source;
+			this.path = path;
 
-			var segList = this.pathSegList;
+			var segList = this.path.pathSegList;
 			var numItems = segList.numberOfItems;
 			var startSeg = segList.getItem(0);
 

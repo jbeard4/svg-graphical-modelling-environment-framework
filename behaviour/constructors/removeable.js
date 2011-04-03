@@ -28,7 +28,10 @@ define(["helpers","behaviours"],
 							//get all splines
 							//console.log("c.source.node.pathSegType",c.source.node.pathSegType);
 							//console.log("c.source.node.pathRef",c.source.node.pathRef);
-							return c.source.node.pathSegType && c.source.node.pathRef && c.source.node.pathRef.behaviours[behaviours.REMOVABLE]; 
+							return c.source.node.pathSegType && 
+								c.source.node.pathRef && 
+								c.source.node.pathRef.behaviours &&	
+								c.source.node.pathRef.behaviours[behaviours.REMOVABLE]; 
 						});
 
 					//console.log("allSplinesInConstraintGraph",allSplinesInConstraintGraph);

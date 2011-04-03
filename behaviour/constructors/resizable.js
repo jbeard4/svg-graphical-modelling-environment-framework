@@ -19,6 +19,7 @@ define(["helpers"],
 			this.behaviours.RESIZABLE = true;
 
 			$(this).addClass("resizable-e");
+			$(this).addClass("control");
 
 			env.hookElementEventsToStatechart(this,["mousedown"],true);
 
@@ -44,6 +45,7 @@ define(["helpers"],
 			this.behaviours.RESIZABLE = true;
 
 			$(this).addClass("resizable-s");
+			$(this).addClass("control");
 
 			env.hookElementEventsToStatechart(this,["mousedown"],true);
 
@@ -72,6 +74,7 @@ define(["helpers"],
 			this.behaviours.RESIZABLE = true;
 
 			$(this).addClass("resizable-se");
+			$(this).addClass("control");
 
 			env.hookElementEventsToStatechart(this,["mousedown"],true);
 

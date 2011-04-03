@@ -393,6 +393,9 @@
 			<!-- TODO: make sure that he's the same target before returning? -->
 			<transition target="updating_endpoint_before_selecting_next_mode" event="mouseout"
 				cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
+				<script>
+					curveBeingDrawn.unsetTarget();
+				</script>
 			</transition>
 
 			<transition event="mousedown" target="idle"/>

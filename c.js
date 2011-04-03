@@ -268,7 +268,7 @@ define(["lib/svg"],
 										case "bbox":
 											return bbox;
 										default:
-											return parseInt(destNode.getAttributeNS(null,destAttr),10) || 0;
+											return destNode.getAttributeNS(null,destAttr);
 									}
 								}else{
 									//assume it is some other kind of object, and access the value as a regular js property
