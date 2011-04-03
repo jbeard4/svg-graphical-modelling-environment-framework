@@ -1,6 +1,6 @@
 define(
-	["helpers","behaviour/constructors/path-drawable","behaviour/constructors/removeable"],
-	function(h,setupDrawPath,setupRemoveable){		
+	["helpers","behaviour/constructors/path-drawable","behaviour/constructors/arrow-editable","behaviour/constructors/removeable"],
+	function(h,setupDrawPath,setupArrowEditorBehaviour,setupRemoveable){		
 		return function(env,source,x,y){
 			x = x || 0;
 			y = y || 0;
@@ -25,7 +25,7 @@ define(
 
 			//set up behaviour interface and data
 			setupDrawPath.call(icon,env,source,path);
-			//setupArrowEditorBehaviour.call(thickPath,env);
+			setupArrowEditorBehaviour.call(icon,env,path);
 			setupRemoveable.call(icon,env);
 
 			return icon;

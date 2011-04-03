@@ -1,6 +1,6 @@
-define(["helpers","c","behaviour/constructors/arrow-editable","lib/geometry/2D.js","lib/geometry/Intersection.js"],
+define(["helpers","c","lib/geometry/2D.js","lib/geometry/Intersection.js"],
 
-	function(h,cm,setupArrowEditorBehaviour){
+	function(h,cm){
 		//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
 		var drawPathBehaviourAPI = {
 
@@ -106,7 +106,6 @@ define(["helpers","c","behaviour/constructors/arrow-editable","lib/geometry/2D.j
 				$(this.thickPath).removeClass("marker");
 				h.addPathRefToEachSegment(this.thickPath); 
 				$(this.thickPath).addClass("control");
-				setupArrowEditorBehaviour.call(this.thickPath,this.env);
 				this.appendChild(this.thickPath); 
 
 				this.thickPathBindingConstraints = [];

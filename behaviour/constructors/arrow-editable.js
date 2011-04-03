@@ -9,12 +9,12 @@ define(
 				//the statechart then knows how to interpet those. get a behaviour CONTROL_POINT_DRAGGABLE
 				//although it might be better just to have a general dragging interface... yah... ok. yah, this can all live in idle don't need to be in a special state to edit curves. yah, i like it. the only question is how to get it out of editing mode. and the answer to that is... normally to click the canvas? yah. so we would need to route this event down.... ok, i can live with that. this will be part of the general deselection method anyway... I say we go for the more general approach now. 
 
-				var numItems = this.pathSegList.numberOfItems;
+				var numItems = this.path.pathSegList.numberOfItems;
 				for(var i=0; i < numItems; i++){
 					var nextPathSeg, cp1, cp2, endPoint;
 					nextPathSeg = cp1 = cp2 = null;
 
-					var pathSeg = this.pathSegList.getItem(i);
+					var pathSeg = this.path.pathSegList.getItem(i);
 					//debugger
 
 					//for the endpoint, always create an endpoint icon
@@ -23,7 +23,7 @@ define(
 					this.points.push(endPoint);
 
 					if(i < (numItems - 1) ){
-						nextPathSeg = this.pathSegList.getItem(i+1);
+						nextPathSeg = this.path.pathSegList.getItem(i+1);
 					}
 
 					//first is M segment so we skip it
@@ -65,7 +65,7 @@ define(
 			}
 		};
 
-		function setupArrowEditorBehaviour(env){
+		function setupArrowEditorBehaviour(env,path){
 
 			this.env = env;
 
@@ -73,6 +73,8 @@ define(
 			this.behaviours = this.behaviours || {};
 
 			this.behaviours.ARROW_EDITABLE = true;
+
+			this.path = path;
 
 			$(this).addClass("arrow-editable");
 
