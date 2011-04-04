@@ -86,15 +86,15 @@ function init(evt) {
 
 			//setup canvas as a drop target
 
-			dropTargetable(env,
-					rootRectDropTarget,
-					nodeLayer,
-					{topPadding:10,
-						bottomPadding:10,
-						leftPadding:10,
-						rightPadding:10,
-						minWidth:10,
-						minHeight:10});
+			dropTargetable.call(rootRectDropTarget,
+						env,
+						nodeLayer,
+						{topPadding:10,
+							bottomPadding:10,
+							leftPadding:10,
+							rightPadding:10,
+							minWidth:10,
+							minHeight:10});
 
 			//initialize
 			compiledStatechartInstance.initialize();

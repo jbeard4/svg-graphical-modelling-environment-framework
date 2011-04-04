@@ -1,6 +1,13 @@
 define(	
-	["c","behaviour/constructors/selectable","behaviour/constructors/removeable"],
-	function(cm,setupSelectable,setupRemoveable){
+	["c",
+		"behaviour/constructors/selectable",
+		"behaviour/constructors/removeable",
+		"behaviour/constructors/arrow-source",
+		"behaviour/constructors/arrow-target",
+		"behaviour/constructors/draggable",
+		"behaviour/constructors/text-editable"],
+
+	function(cm,setupSelectable,setupRemoveable,setupArrowSource,setupArrowTarget,setupDraggable,setupTextEditable){
 		return function(env,x,y){
 			
 			var icon = env.svg.group(env.nodeLayer);
@@ -164,23 +171,11 @@ define(
 			
 			},false);
 
-			//all entitites with some default behaviour get the appropriate event listeners hooked up.
-			//there is one default behaviour statechart instance shared by all elements
-			//FIXME: do we or do we not allow event propagation????
+			setupTextEditable.call(nameText,env);
 
-			nameText.behaviours = {
-				TEXT_EDITABLE : true
-			};
-
-			env.hookElementEventsToStatechart(nameText,["mousedown"],false);
-
-			icon.behaviours = {
-				DRAGGABLE : true,
-				ARROW_SOURCE : true,
-				ARROW_TARGET : true
-			};
-
-			env.hookElementEventsToStatechart(icon,["mousedown","mouseup","mousemove","mouseover","mouseout"],true);
+			setupArrowSource.call(icon,env);
+			setupArrowTarget.call(icon,env);
+			setupDraggable.call(icon,env);
 
 			setupSelectable.call(icon);
 			setupRemoveable.call(icon,env);

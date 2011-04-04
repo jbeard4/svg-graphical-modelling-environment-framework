@@ -3,9 +3,14 @@ define(
 		"behaviour/constructors/selectable",
 		"behaviour/constructors/resizable",
 		"behaviour/constructors/drop-targetable",
-		"behaviour/constructors/removeable"],
+		"behaviour/constructors/removeable",
+		"behaviour/constructors/arrow-source",
+		"behaviour/constructors/arrow-target",
+		"behaviour/constructors/draggable"
+		],
 
-	function(cm,setupSelectable,resizable,setupDropTarget,setupRemoveable){
+
+	function(cm,setupSelectable,resizable,setupDropTarget,setupRemoveable,setupArrowSource,setupArrowTarget,setupDraggable){
 		return function(env,x,y){
 
 			var PACKAGE_MIN_WIDTH = 100, 
@@ -136,19 +141,11 @@ define(
 			resizable.setupResizableSouth.call(classContainerRectSouthResizeHandle,env,resizeHandleKwArgs);
 			resizable.setupResizableSouthEast.call(classContainerRectSouthEastResizeHandle,env,resizeHandleKwArgs);
 
-			icon.behaviours = {
-				DRAGGABLE : true,
-				ARROW_SOURCE : true,
-				ARROW_TARGET : true
-			};
+			setupArrowSource.call(icon,env);
+			setupArrowTarget.call(icon,env);
+			setupDraggable.call(icon,env);
 
-
-			//here we hook up appropriate events to elements with default behaviour
-			//what are appropriate events? we are defining these as we go...
-
-			env.hookElementEventsToStatechart(icon,["mousedown","mouseup","mousemove","mouseover","mouseout"],true);
-
-			setupDropTarget(env,classContainerRect,icon,
+			setupDropTarget.call(classContainerRect,env,icon,
 						{topPadding:PACKAGE_TOP_PADDING,
 							bottomPadding:PACKAGE_BOTTOM_PADDING,
 							leftPadding:PACKAGE_LEFT_PADDING,

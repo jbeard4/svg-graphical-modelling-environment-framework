@@ -1,6 +1,13 @@
 define(
 	function(){
-		//TODO: hook this up
-		return null;
+		return function(env){
+			this.behaviours = this.behaviours || {};
+
+			this.behaviours.DRAGGABLE = true;
+
+			$(this).addClass("draggable");
+
+			env.hookElementEventsToStatechart(this,["mousedown","mousemove","mouseup"],true);
+		};
 	}
 );

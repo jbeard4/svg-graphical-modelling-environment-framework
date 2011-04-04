@@ -39,7 +39,7 @@ rect#dragging,rect#marquee {
 }
 
 .control {
-	opacity : 1;
+	opacity : 0;
 	stroke-width : 10;
 	stroke:red;
 }
