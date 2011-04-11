@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+    xmlns:xlink="http://www.w3.org/1999/xlink"> 
+	<path id="testQuadratic" d="M 100,100 Q 200,0 300,100" fill="none" stroke="red"/>
+	<path id="testCubic" d="M 100,300 C 200,200 300,400 400,300" fill="none" stroke="red"/>
+	<circle id="p1" cx="0" cy="0" r="5" fill="white" stroke="blue"/>
+	<circle id="p2" cx="200" cy="30" r="5" fill="white" stroke="blue"/>
+	<circle id="p3" cx="0" cy="200" r="5" fill="white" stroke="blue"/>
+	<script type="application/ecmascript" xlink:href="../lib/require.js"/>
+	<script type="application/ecmascript"><![CDATA[
+
+		var svgNS = "http://www.w3.org/2000/svg";
+
+		function createLine(s,e){
+			var l = document.createElementNS(svgNS,"line");
+			l.setAttributeNS(null,"fill","none");
+			l.setAttributeNS(null,"stroke","blue");
+			document.documentElement.appendChild(l);
+			//debugger;
+			l.x1.baseVal.value = s.x;
+			l.y1.baseVal.value = s.y;
+			l.x2.baseVal.value = e.x;
+			l.y2.baseVal.value = e.y;
+
+			return l;
+		}
+
+		require(["../lib/BezierUtils"],function(closestPointToBezier){
+
+			function Point(x,y){
+				return {
+					x:x,
+					y:y
+				}
+			}
+
+			var testQuadratic = document.getElementById("testQuadratic");
+			var testCubic = document.getElementById("testCubic");
+			var p1 = document.getElementById("p1");
+			var p2 = document.getElementById("p2");
+			var p3 = document.getElementById("p3");
+
+			var prevStartPoint = testQuadratic.pathSegList.getItem(0);
+			var seg = testQuadratic.pathSegList.getItem(1);
+			seg.x0 = prevStartPoint.x;
+			seg.y0 = prevStartPoint.y;
+
+			for(var i = 100,j=0; i < 300 && j < 200; i++,j++){
+				p2.cx.baseVal.value = i;
+				p2.cy.baseVal.value = j;
+				var testp1 = Point(p2.cx.baseVal.value,p2.cy.baseVal.value);
+				var outp = closestPointToBezier(seg,testp1);
+				console.log(outp);
+				var l = createLine(testp1,outp.pMinimum);
+			}
+
+
+			prevStartPoint = testCubic.pathSegList.getItem(0);
+			seg = testCubic.pathSegList.getItem(1);
+			seg.x0 = prevStartPoint.x;
+			seg.y0 = prevStartPoint.y;
+
+			for(var i = 100,j=200; i < 400 && j < 400; i++,j++){
+				p3.cx.baseVal.value = i;
+				p3.cy.baseVal.value = j;
+				var testp1 = Point(p3.cx.baseVal.value,p3.cy.baseVal.value);
+				var outp = closestPointToBezier(seg,testp1);
+				console.log(outp);
+				var l = createLine(testp1,outp.pMinimum);
+			}
+			
+			/*
+			var outp3 = nearestPoint(testp2,qtest);
+			*/
+		});
+	]]></script>
+</svg>
+
+
+
