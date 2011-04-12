@@ -2,7 +2,7 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 	<path id="testQuadratic" d="M 100,100 Q 200,0 300,100" fill="none" stroke="red"/>
 	<path id="testCubic" d="M 100,300 C 200,200 300,400 400,300" fill="none" stroke="red"/>
-	<path id="testLine" d="M 400,100 L 600,100" fill="none" stroke="red"/>
+	<path id="testLine" d="M 400,100 L 600,200" fill="none" stroke="red"/>
 	<circle id="p1" cx="0" cy="0" r="5" fill="white" stroke="blue"/>
 	<circle id="p2" cx="200" cy="30" r="5" fill="white" stroke="blue"/>
 	<circle id="p3" cx="0" cy="200" r="5" fill="white" stroke="blue"/>
@@ -27,7 +27,12 @@
 		}
 
 
-		require(["../lib/BezierUtils","../lib/NearestPointToLine"],function(closestPointToBezier,nearestPointToLine){
+		require(
+			{
+				baseUrl : "../"
+			},
+			["lib/NearestPoint/BezierUtils","lib/NearestPoint/NearestPointToLine"],
+			function(closestPointToBezier,nearestPointToLine){
 
 			function Point(x,y){
 				return {
@@ -59,7 +64,7 @@
 				var testp1 = Point(p4.cx.baseVal.value,p4.cy.baseVal.value);
 				var p = nearestPointToLine(seg,testp1);
 				//console.log("p",p);
-				createLine(testp1,p);
+				createLine(testp1,p.pMinimum);
 			}
 
 			var prevStartPoint = testQuadratic.pathSegList.getItem(0);
