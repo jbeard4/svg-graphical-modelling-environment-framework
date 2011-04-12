@@ -2,9 +2,11 @@
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 	<path id="testQuadratic" d="M 100,100 Q 200,0 300,100" fill="none" stroke="red"/>
 	<path id="testCubic" d="M 100,300 C 200,200 300,400 400,300" fill="none" stroke="red"/>
+	<path id="testLine" d="M 400,100 L 600,100" fill="none" stroke="red"/>
 	<circle id="p1" cx="0" cy="0" r="5" fill="white" stroke="blue"/>
 	<circle id="p2" cx="200" cy="30" r="5" fill="white" stroke="blue"/>
 	<circle id="p3" cx="0" cy="200" r="5" fill="white" stroke="blue"/>
+	<circle id="p4" cx="500" cy="30" r="5" fill="white" stroke="blue"/>
 	<script type="application/ecmascript" xlink:href="../lib/require.js"/>
 	<script type="application/ecmascript"><![CDATA[
 
@@ -24,7 +26,8 @@
 			return l;
 		}
 
-		require(["../lib/BezierUtils"],function(closestPointToBezier){
+
+		require(["../lib/BezierUtils","../lib/NearestPointToLine"],function(closestPointToBezier,nearestPointToLine){
 
 			function Point(x,y){
 				return {
@@ -35,9 +38,29 @@
 
 			var testQuadratic = document.getElementById("testQuadratic");
 			var testCubic = document.getElementById("testCubic");
+			var testLine = document.getElementById("testLine");
 			var p1 = document.getElementById("p1");
 			var p2 = document.getElementById("p2");
 			var p3 = document.getElementById("p3");
+			var p4 = document.getElementById("p4");
+
+			var l = document.documentElement.suspendRedraw(1000);
+			console.log(l);
+
+			var prevStartPoint = testLine.pathSegList.getItem(0);
+			var seg = testLine.pathSegList.getItem(1);
+			seg.x0 = prevStartPoint.x;
+			seg.y0 = prevStartPoint.y;
+			
+			for(var i = 400,j=0; i < 600 && j < 200; i++,j++){
+				p4.cx.baseVal.value = i;
+				p4.cy.baseVal.value = j;
+
+				var testp1 = Point(p4.cx.baseVal.value,p4.cy.baseVal.value);
+				var p = nearestPointToLine(seg,testp1);
+				//console.log("p",p);
+				createLine(testp1,p);
+			}
 
 			var prevStartPoint = testQuadratic.pathSegList.getItem(0);
 			var seg = testQuadratic.pathSegList.getItem(1);
@@ -49,7 +72,7 @@
 				p2.cy.baseVal.value = j;
 				var testp1 = Point(p2.cx.baseVal.value,p2.cy.baseVal.value);
 				var outp = closestPointToBezier(seg,testp1);
-				console.log(outp);
+				//console.log(outp);
 				var l = createLine(testp1,outp.pMinimum);
 			}
 
@@ -64,10 +87,12 @@
 				p3.cy.baseVal.value = j;
 				var testp1 = Point(p3.cx.baseVal.value,p3.cy.baseVal.value);
 				var outp = closestPointToBezier(seg,testp1);
-				console.log(outp);
+				//console.log(outp);
 				var l = createLine(testp1,outp.pMinimum);
 			}
 			
+			document.documentElement.unsuspendRedraw(l);
+
 			/*
 			var outp3 = nearestPoint(testp2,qtest);
 			*/
