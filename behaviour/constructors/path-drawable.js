@@ -2,6 +2,62 @@ define(["helpers","c","lib/NearestPoint/NearestPointToPath","lib/geometry/2D.js"
 
 
 	function(h,cm,getNearestPointOnPath){
+
+		//constraint computes the center point of the box constraints
+		//get the intersection of that, and the other point we're giving it
+		function getSourceConstraintFunction(xOrY){
+			return function(x0,y0,toX,toY,toWidth,toHeight){
+				var x1 = toX + toWidth/2;
+				var y1 = toY + toHeight/2;
+
+
+				var p1 = new Point2D(x0,y0),
+					p2 = new Point2D(x1,y1);
+
+				var r1,r2;
+				r1 = new Point2D(toX,toY);
+				r2 = new Point2D(toX + toWidth, toY + toHeight);
+
+				var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
+
+				var point = inter.points.pop();
+
+				return point && point[xOrY];	//if there's no intersection, we might get back undefined
+			};
+		}
+
+
+		function getSimpleConstraintFunction(xOrY,isSource){
+			return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
+				var x0 = fromX + fromWidth/2;
+				var y0 = fromY + fromHeight/2;
+
+				var x1 = toX + toWidth/2;
+				var y1 = toY + toHeight/2;
+
+
+				var p1 = new Point2D(x0,y0),
+					p2 = new Point2D(x1,y1);
+
+				var r1,r2;
+				if(isSource){
+					r1 = new Point2D(fromX,fromY);
+					r2 = new Point2D(fromX + fromWidth, fromY + fromHeight);
+				}else{
+					r1 = new Point2D(toX,toY);
+					r2 = new Point2D(toX + toWidth, toY + toHeight);
+				}
+
+				var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
+
+				var point = inter.points.pop();
+
+				return point && point[xOrY];	//if there's no intersection, we might get back undefined
+			};
+		}
+
+
+
 		//we define this out here, because if we did it inside of the setup function, we would be create new function instances for each path object that gets set up. wastes memory	
 		var drawPathBehaviourAPI = {
 
@@ -103,135 +159,146 @@ define(["helpers","c","lib/NearestPoint/NearestPointToPath","lib/geometry/2D.js"
 			setTarget : function(target){
 				var endSeg;
 
+
+
+				//create a thick path, which the user will interact with
+				this.thickPath = this.path.cloneNode(true);
+				$(this.thickPath).removeClass("marker");
+				$(this.thickPath).addClass("control");
+				h.addPathRefToEachSegment(this.thickPath); 
+				this.appendChild(this.thickPath); 
+
+				this.thickPathBindingConstraints = [];
+
+				//set constraints on thickPath
+				for(var i=0, l=this.path.pathSegList.numberOfItems; i < l;i++){
+					var pathSeg = this.path.pathSegList.getItem(i);
+					var thickPathSeg = this.thickPath.pathSegList.getItem(i);
+					
+					if(pathSeg.x2 !== undefined){
+						this.thickPathBindingConstraints.push(
+							cm.Constraint(
+								cm.NodeAttr(thickPathSeg,"x2"),
+								cm.NodeAttrExpr(pathSeg,"x2")
+							),
+							cm.Constraint(
+								cm.NodeAttr(thickPathSeg,"y2"),
+								cm.NodeAttrExpr(pathSeg,"y2")
+							)
+						);
+					}
+					if(pathSeg.x1 !== undefined){
+						this.thickPathBindingConstraints.push(
+							cm.Constraint(
+								cm.NodeAttr(thickPathSeg,"x1"),
+								cm.NodeAttrExpr(pathSeg,"x1")
+							),
+							cm.Constraint(
+								cm.NodeAttr(thickPathSeg,"y1"),
+								cm.NodeAttrExpr(pathSeg,"y1")
+							)
+						);
+					}
+					if(pathSeg.x !== undefined){
+						this.thickPathBindingConstraints.push(
+							cm.Constraint(
+								cm.NodeAttr(thickPathSeg,"x"),
+								cm.NodeAttrExpr(pathSeg,"x")
+							),
+							cm.Constraint(
+								cm.NodeAttr(thickPathSeg,"y"),
+								cm.NodeAttrExpr(pathSeg,"y")
+							)
+						);
+					}
+				}
+
+				console.log("this.thickPathBindingConstraints",this.thickPathBindingConstraints);
+
+				this.thickPathBindingConstraints.forEach(function(c){
+					this.env.constraintGraph.push(c);
+				},this);
+
+				/*
+				//TODO: another possibility is to cheat and just mind to "d" attr
+				//we would need to make our constraint solver smarter for that though
+				//it would need to know that "d" means having a dependency on all attributes of all segment nodes
+				//if we were to just use "d" without changing the constraint solver, then the topo sort would not work correctly.
+				this.thickPathBindingConstraint = 
+					cm.Constraint(
+						cm.NodeAttr(this.path,"d"),
+						cm.NodeAttrExpr(this.thickPath,"d")
+					);
+
+				this.env.constraintGraph.push(this.thickPathBindingConstraint);
+				*/
+
+
+
+				//remove and update sourceConstraintX and sourceConstraintY to avoid arrow occlusion 
+				[this.sourceConstraintX,this.sourceConstraintY].forEach(function(c){
+					h.removeFromList(c,this.env.constraintGraph);
+				},this);
+
+				var segList = this.path.pathSegList;
+				var numItems = segList.numberOfItems;
+	
+				endSeg = segList.getItem(numItems-1);
+				var startSeg = segList.getItem(0);
+				var segAfterStartSeg = segList.getItem(1);
+				
+				var  getTargetConstraintFunction,
+					afterStartSegPropStr,
+					beforeEndSegPropStr,
+					startDepList,
+					endDepList,
+					depList,
+					segBeforeEndSeg;
+
+				var targetIsPath = target.localName === "path";
+				var useAdvancedLayout = numItems > 2 || segAfterStartSeg.x1 !== undefined || targetIsPath;
+
+				//set up the constraint graph for the target
+				//will be different depending on if we're targeting a path, or something else
 				console.log("target",target);
 				this.target = target;
-				if(target.localName === "path"){
-					//get endpoint of curve
-					//TODO:set constraint on path
-					//TODO:augment constraint system so that deps on path are unrolled to deps on segments
-					endSeg = h.getEndSegFromPath(this.path);
-					var o = getNearestPointOnPath(target,endSeg);
-					//set endpoint 
-					endSeg.x = o.pMinimum.x;
-					endSeg.y = o.pMinimum.y;
-				}else{
+				if(useAdvancedLayout){
 
-					//create a thick path, which the user will interact with
-					this.thickPath = this.path.cloneNode(true);
-					$(this.thickPath).removeClass("marker");
-					$(this.thickPath).addClass("control");
-					h.addPathRefToEachSegment(this.thickPath); 
-					this.appendChild(this.thickPath); 
+					afterStartSegPropStr = segAfterStartSeg.x1 !== undefined ?  "1" : ""; 
 
-					this.thickPathBindingConstraints = [];
-
-					//bind path to thickpath
-					for(var i=0, l=this.path.pathSegList.numberOfItems; i < l;i++){
-						var pathSeg = this.path.pathSegList.getItem(i);
-						var thickPathSeg = this.thickPath.pathSegList.getItem(i);
-						
-						if(pathSeg.x2 !== undefined){
-							this.thickPathBindingConstraints.push(
-								cm.Constraint(
-									cm.NodeAttr(thickPathSeg,"x2"),
-									cm.NodeAttrExpr(pathSeg,"x2")
-								),
-								cm.Constraint(
-									cm.NodeAttr(thickPathSeg,"y2"),
-									cm.NodeAttrExpr(pathSeg,"y2")
-								)
-							);
-						}
-						if(pathSeg.x1 !== undefined){
-							this.thickPathBindingConstraints.push(
-								cm.Constraint(
-									cm.NodeAttr(thickPathSeg,"x1"),
-									cm.NodeAttrExpr(pathSeg,"x1")
-								),
-								cm.Constraint(
-									cm.NodeAttr(thickPathSeg,"y1"),
-									cm.NodeAttrExpr(pathSeg,"y1")
-								)
-							);
-						}
-						if(pathSeg.x !== undefined){
-							this.thickPathBindingConstraints.push(
-								cm.Constraint(
-									cm.NodeAttr(thickPathSeg,"x"),
-									cm.NodeAttrExpr(pathSeg,"x")
-								),
-								cm.Constraint(
-									cm.NodeAttr(thickPathSeg,"y"),
-									cm.NodeAttrExpr(pathSeg,"y")
-								)
-							);
-						}
+					if(endSeg.x2 !== undefined){
+						beforeEndSegPropStr = "2";
+						segBeforeEndSeg = endSeg;
+					}else if(endSeg.x1 !== undefined){
+						beforeEndSegPropStr = "1";
+						segBeforeEndSeg = endSeg;
+					}else{
+						beforeEndSegPropStr = "";
+						segBeforeEndSeg = segList.getItem(numItems-2);
 					}
 
-					console.log("this.thickPathBindingConstraints",this.thickPathBindingConstraints);
+					if(targetIsPath){
 
-					this.thickPathBindingConstraints.forEach(function(c){
-						this.env.constraintGraph.push(c);
-					},this);
+						endDepList = [
+									cm.NodeAttrExpr(segBeforeEndSeg,"x" + beforeEndSegPropStr),
+									cm.NodeAttrExpr(segBeforeEndSeg,"y" + beforeEndSegPropStr),
+									cm.NodeAttrExpr(target,"pathSegList")];
 
-					/*
-					//TODO: another possibility is to cheat and just mind to "d" attr
-					//we would need to make our constraint solver smarter for that though
-					//it would need to know that "d" means having a dependency on all attributes of all segment nodes
-					//if we were to just use "d" without changing the constraint solver, then the topo sort would not work correctly.
-					this.thickPathBindingConstraint = 
-						cm.Constraint(
-							cm.NodeAttr(this.path,"d"),
-							cm.NodeAttrExpr(this.thickPath,"d")
-						);
+						//constraint computes the center point of the box constraints
+						//get the intersection of that, and the other point we're giving it
+						getTargetConstraintFunction = function(xOrY){
+							return function(x0,y0,segList){
+								var o = getNearestPointOnPath(segList,{x:x0,y:y0});
 
-					this.env.constraintGraph.push(this.thickPathBindingConstraint);
-					*/
+								var pMin = o.pMinimum;
 
-					//now we set constraints on thickPath
-
-					//set up the constraint graph for the target
-
-					//remove and update sourceConstraintX and sourceConstraintY to avoid arrow occlusion 
-					[this.sourceConstraintX,this.sourceConstraintY].forEach(function(c){
-						h.removeFromList(c,this.env.constraintGraph);
-					},this);
-
-					
-					var segList = this.path.pathSegList;
-					var numItems = segList.numberOfItems;
-					endSeg = segList.getItem(numItems-1);
-					var startSeg = segList.getItem(0);
-					var segAfterStartSeg = segList.getItem(1);
-					
-					var getConstraintFunction;
-					if(numItems > 2 || segAfterStartSeg.x1 !== undefined){
-						var afterStartSegPropStr = segAfterStartSeg.x1 !== undefined ?  "1" : ""; 
-
-						var segBeforeEndSeg,beforeEndSegPropStr;
-						if(endSeg.x2 !== undefined){
-							beforeEndSegPropStr = "2";
-							segBeforeEndSeg = endSeg;
-						}else if(endSeg.x1 !== undefined){
-							beforeEndSegPropStr = "1";
-							segBeforeEndSeg = endSeg;
-						}else{
-							beforeEndSegPropStr = "";
-							segBeforeEndSeg = segList.getItem(numItems-2);
-						}
-
-						//constraint will be the intersection between the rect, and the line starting from the center of the rect and extending to the point we have picked out. 
-						//start and end will now have different dep lists
-						var startDepList = [
-									cm.NodeAttrExpr(segAfterStartSeg,"x" + afterStartSegPropStr),
-									cm.NodeAttrExpr(segAfterStartSeg,"y" + afterStartSegPropStr),
-									cm.NodeAttrExpr(this.source,"x"),
-									cm.NodeAttrExpr(this.source,"y"),
-									cm.NodeAttrExpr(this.source,"width"),
-									cm.NodeAttrExpr(this.source,"height")];
+								return pMin[xOrY];
+							};
+						};
+					}else{
 
 
-						var endDepList = [
+						endDepList = [
 									cm.NodeAttrExpr(segBeforeEndSeg,"x" + beforeEndSegPropStr),
 									cm.NodeAttrExpr(segBeforeEndSeg,"y" + beforeEndSegPropStr),
 									cm.NodeAttrExpr(target,"x"),
@@ -241,7 +308,7 @@ define(["helpers","c","lib/NearestPoint/NearestPointToPath","lib/geometry/2D.js"
 
 						//constraint computes the center point of the box constraints
 						//get the intersection of that, and the other point we're giving it
-						getConstraintFunction = function(xOrY){
+						getTargetConstraintFunction = function(xOrY){
 							return function(x0,y0,toX,toY,toWidth,toHeight){
 								var x1 = toX + toWidth/2;
 								var y1 = toY + toHeight/2;
@@ -261,122 +328,103 @@ define(["helpers","c","lib/NearestPoint/NearestPointToPath","lib/geometry/2D.js"
 								return point && point[xOrY];	//if there's no intersection, we might get back undefined
 							};
 						};
-
-						//set up new sourceConstraintX and sourceConstraintY
-						this.sourceConstraintX = 
-							cm.Constraint(
-								cm.NodeAttr(startSeg,"x"),
-								startDepList, 
-								getConstraintFunction("x",true)
-							);
-
-
-						this.sourceConstraintY = 
-							cm.Constraint(
-								cm.NodeAttr(startSeg,"y"),
-								startDepList, 
-								getConstraintFunction("y",true)
-							);
-
-						//set up target constraints
-						this.targetConstraintX = 
-							cm.Constraint(
-								cm.NodeAttr(endSeg,"x"),
-								endDepList,
-								getConstraintFunction("x",false)
-							);
-
-						this.targetConstraintY = 
-							cm.Constraint(
-								cm.NodeAttr(endSeg,"y"),
-								endDepList,
-								getConstraintFunction("y",false)
-							);
-					
-
-						this.env.constraintGraph.push(this.sourceConstraintX,
-									this.sourceConstraintY,
-									this.targetConstraintX,
-									this.targetConstraintY);
-
-					}else{
-
-						
-						getConstraintFunction =  function(xOrY,isSource){
-							return function(fromX,fromY,fromWidth,fromHeight,toX,toY,toWidth,toHeight){
-								var x0 = fromX + fromWidth/2;
-								var y0 = fromY + fromHeight/2;
-
-								var x1 = toX + toWidth/2;
-								var y1 = toY + toHeight/2;
-
-
-								var p1 = new Point2D(x0,y0),
-									p2 = new Point2D(x1,y1);
-
-								var r1,r2;
-								if(isSource){
-									r1 = new Point2D(fromX,fromY);
-									r2 = new Point2D(fromX + fromWidth, fromY + fromHeight);
-								}else{
-									r1 = new Point2D(toX,toY);
-									r2 = new Point2D(toX + toWidth, toY + toHeight);
-								}
-
-								var inter = Intersection.intersectLineRectangle(p1,p2,r1,r2);
-
-								var point = inter.points.pop();
-
-								return point && point[xOrY];	//if there's no intersection, we might get back undefined
-							};
-						};
-
-						var depList = [cm.NodeAttrExpr(this.source,"x"),
-									cm.NodeAttrExpr(this.source,"y"),
-									cm.NodeAttrExpr(this.source,"width"),
-									cm.NodeAttrExpr(this.source,"height"),
-									cm.NodeAttrExpr(target,"x"),
-									cm.NodeAttrExpr(target,"y"),
-									cm.NodeAttrExpr(target,"width"),
-									cm.NodeAttrExpr(target,"height")];
-						
-						//set up target constraints
-						this.targetConstraintX = 
-							cm.Constraint(
-								cm.NodeAttr(endSeg,"x"),
-								depList, 
-								getConstraintFunction("x",false)
-							);
-
-						this.targetConstraintY = 
-							cm.Constraint(
-								cm.NodeAttr(endSeg,"y"),
-								depList, 
-								getConstraintFunction("y",false)
-							);
-					
-						//set up new sourceConstraintX and sourceConstraintY
-						this.sourceConstraintX = 
-							cm.Constraint(
-								cm.NodeAttr(startSeg,"x"),
-								depList, 
-								getConstraintFunction("x",true)
-							);
-
-
-						this.sourceConstraintY = 
-							cm.Constraint(
-								cm.NodeAttr(startSeg,"y"),
-								depList, 
-								getConstraintFunction("y",true)
-							);
-
-						this.env.constraintGraph.push(this.sourceConstraintX,
-									this.sourceConstraintY,
-									this.targetConstraintX,
-									this.targetConstraintY);
 					}
+
+					//constraint will be the intersection between the rect, 
+					//and the line starting from the center of the rect and extending to the point we have picked out. 
+					startDepList = [
+								cm.NodeAttrExpr(segAfterStartSeg,"x" + afterStartSegPropStr),
+								cm.NodeAttrExpr(segAfterStartSeg,"y" + afterStartSegPropStr),
+								cm.NodeAttrExpr(this.source,"x"),
+								cm.NodeAttrExpr(this.source,"y"),
+								cm.NodeAttrExpr(this.source,"width"),
+								cm.NodeAttrExpr(this.source,"height")];
+
+					//set up new sourceConstraintX and sourceConstraintY
+					this.sourceConstraintX = 
+						cm.Constraint(
+							cm.NodeAttr(startSeg,"x"),
+							startDepList, 
+							getSourceConstraintFunction("x",true)
+						);
+
+
+					this.sourceConstraintY = 
+						cm.Constraint(
+							cm.NodeAttr(startSeg,"y"),
+							startDepList, 
+							getSourceConstraintFunction("y",true)
+						);
+
+					//set up target constraints
+					this.targetConstraintX = 
+						cm.Constraint(
+							cm.NodeAttr(endSeg,"x"),
+							endDepList,
+							getTargetConstraintFunction("x",false)
+						);
+
+					this.targetConstraintY = 
+						cm.Constraint(
+							cm.NodeAttr(endSeg,"y"),
+							endDepList,
+							getTargetConstraintFunction("y",false)
+						);
+				
+
+					this.env.constraintGraph.push(this.sourceConstraintX,
+								this.sourceConstraintY,
+								this.targetConstraintX,
+								this.targetConstraintY);
+
+				}else{
+					
+					depList = [cm.NodeAttrExpr(this.source,"x"),
+								cm.NodeAttrExpr(this.source,"y"),
+								cm.NodeAttrExpr(this.source,"width"),
+								cm.NodeAttrExpr(this.source,"height"),
+								cm.NodeAttrExpr(target,"x"),
+								cm.NodeAttrExpr(target,"y"),
+								cm.NodeAttrExpr(target,"width"),
+								cm.NodeAttrExpr(target,"height")];
+					
+					//set up target constraints
+					this.targetConstraintX = 
+						cm.Constraint(
+							cm.NodeAttr(endSeg,"x"),
+							depList, 
+							getSimpleConstraintFunction("x",false)
+						);
+
+					this.targetConstraintY = 
+						cm.Constraint(
+							cm.NodeAttr(endSeg,"y"),
+							depList, 
+							getSimpleConstraintFunction("y",false)
+						);
+				
+					//set up new sourceConstraintX and sourceConstraintY
+					this.sourceConstraintX = 
+						cm.Constraint(
+							cm.NodeAttr(startSeg,"x"),
+							depList, 
+							getSimpleConstraintFunction("x",true)
+						);
+
+
+					this.sourceConstraintY = 
+						cm.Constraint(
+							cm.NodeAttr(startSeg,"y"),
+							depList, 
+							getSimpleConstraintFunction("y",true)
+						);
+
+					this.env.constraintGraph.push(this.sourceConstraintX,
+								this.sourceConstraintY,
+								this.targetConstraintX,
+								this.targetConstraintY);
 				}
+				
 			},
 			unsetTarget : function(){
 				//TODO: use a better test

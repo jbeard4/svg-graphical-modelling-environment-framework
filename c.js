@@ -118,6 +118,14 @@ define(["lib/svg"],
 				return a.concat(b);
 			}
 
+			function pathSegListToJsArray(pathSegList){
+				var toReturn = [];
+				for(var i=0; i < pathSegList.numberOfItems; i++){
+					toReturn.push(pathSegList.getItem(i));	
+				}
+				return toReturn;
+			}
+
 
 			var nodes = constraints.map(function(c){
 				return [c.source].concat(
@@ -128,6 +136,11 @@ define(["lib/svg"],
 							return d.nodeAttrs;
 						}).reduce(flatten,[]));
 			}).reduce(flatten,[]);
+
+			function nodeExprIsTransitivePathOntoSegs(n){
+				return n.node.localName && n.node.localName === "path"
+					&& (n.attr === "d" || n.attr === "pathSegList");
+			}
 
 			//eliminate duplicate nodes
 			nodes = unique(nodes);
@@ -163,6 +176,46 @@ define(["lib/svg"],
 					//if(edge.source.node === edge.dest.node){ debugger;}
 					return edge.source.node !== edge.dest.node;
 				});
+
+			var segAttrs = ["x","y","x1","y1","x2","y2"];
+
+			var transitivePathNodeExpr = nodes.filter(nodeExprIsTransitivePathOntoSegs);
+
+			console.log("transitivePathNodeExpr",transitivePathNodeExpr);
+
+			//add transitive nodes of paths onto its segments
+			var transitivePathSegmentEdges = 
+				transitivePathNodeExpr.map(function(n){
+					return pathSegListToJsArray(n.node.pathSegList)
+						.map(function(seg){
+							return segAttrs.map(function(attr){
+								if(!edges.some(function(e){return e.source === seg && e.attr === attr;})){
+									//may return undefined
+									return {
+										source : n,
+										dest : NodeAttr(seg,attr),
+										equals : function(node){
+											return this === node;
+										}
+									};
+								}else{
+									console.log("filtered out ", seg,attr);
+									return undefined;
+								}
+							}).filter(function(e){return e;}); //filter out undefined
+						}).reduce(flatten,[]);
+				}).reduce(flatten,[]);
+
+			var transitivePathSegmentNodes = transitivePathSegmentEdges.map(function(c){ return c.dest; }); 
+
+			console.log("transitivePathSegmentNodes",transitivePathSegmentNodes);
+			console.log("transitivePathSegmentEdges",transitivePathSegmentEdges);
+
+			nodes = nodes.concat(transitivePathSegmentNodes); 
+
+			nodes = unique(nodes);
+
+			edges = edges.concat(transitivePathSegmentEdges); 
 
 			function printEdges(nodeList){
 				/*jsl:ignore*/
@@ -268,7 +321,7 @@ define(["lib/svg"],
 										case "bbox":
 											return bbox;
 										default:
-											return destNode.getAttributeNS(null,destAttr);
+											return destNode[destAttr] || destNode.getAttributeNS(null,destAttr);
 									}
 								}else{
 									//assume it is some other kind of object, and access the value as a regular js property
