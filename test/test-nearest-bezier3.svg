@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
+    xmlns:xlink="http://www.w3.org/1999/xlink"> 
+	<path id="testPath" d="M 100,100 L 200,200 Q 400,200 300,100 C 400,0 500,200 600,100" fill="none" stroke="red"/>
+	<circle id="p1" cx="100" cy="120" r="5" fill="white" stroke="blue"/>
+	<script type="application/ecmascript" xlink:href="../lib/require.js"/>
+	<script type="application/ecmascript"><![CDATA[
+		var svgNS = "http://www.w3.org/2000/svg";
+
+		function createLine(s,e){
+			var l = document.createElementNS(svgNS,"line");
+			l.setAttributeNS(null,"fill","none");
+			l.setAttributeNS(null,"stroke","blue");
+			document.documentElement.appendChild(l);
+			//debugger;
+			l.x1.baseVal.value = s.x;
+			l.y1.baseVal.value = s.y;
+			l.x2.baseVal.value = e.x;
+			l.y2.baseVal.value = e.y;
+
+			return l;
+		}
+
+
+		require(
+			{
+				baseUrl : "../"
+			},
+			["lib/NearestPoint/NearestPointToPath"],
+			function(nearestPointToPath){
+
+			function Point(x,y){
+				return {
+					x:x,
+					y:y
+				}
+			}
+
+			var p1 = document.getElementById("p1");
+			var testPath = document.getElementById("testPath");
+
+			var l = document.documentElement.suspendRedraw(1000);
+
+			for(var cx = p1.cx.baseVal.value; cx < 600; cx++){
+				p1.cx.baseVal.value = cx;
+
+				var testp = Point(p1.cx.baseVal.value,p1.cy.baseVal.value);
+				var p = nearestPointToPath(testPath,testp);
+				createLine(testp,p.pMinimum);
+			}
+
+			document.documentElement.unsuspendRedraw(l);
+
+		});
+	]]></script>
+</svg>
+
+
+
