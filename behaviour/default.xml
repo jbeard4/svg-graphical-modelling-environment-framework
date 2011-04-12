@@ -330,10 +330,11 @@
 			<state id="updating_endpoint_before_selecting_next_mode">
 
 				<transition target="after_mouseover_arrow_target" event="mouseover"
-					cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]">
+					cond="_event.data.currentTarget.behaviours[modules.behaviours.ARROW_TARGET]
+						&amp;&amp; _event.data.currentTarget !== curveBeingDrawn">
 					<script>
 						//snap to target
-						curveBeingDrawn.setTarget(_event.data.currentTarget);
+						curveBeingDrawn.setTarget(_event.data.currentTarget.arrowTargetElement);
 						modules.env.requestLayout();
 					</script>
 				</transition>
