@@ -1,4 +1,9 @@
 <?xml-stylesheet type="text/css" href="main.css" ?>    
+<!--
+Copyright (C) 2011 Jacob Beard
+Released under GNU GPL, read the file 'COPYING' for more information
+-->
+
 <svg  xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" xmlns:xlink="http://www.w3.org/1999/xlink"> 
 
 	<rect x="100" y="100" width="10" height="100" fill="red" stroke="black" style="cursor:e-resize"/>

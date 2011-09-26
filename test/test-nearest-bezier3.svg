@@ -1,3 +1,7 @@
+<!--
+Copyright (C) 2011 Jacob Beard
+Released under GNU GPL, read the file 'COPYING' for more information
+-->
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"
     xmlns:xlink="http://www.w3.org/1999/xlink"> 
 	<path id="testPath" d="M 100,100 L 200,200 Q 400,200 300,100 C 400,0 500,200 600,100" fill="none" stroke="red"/>

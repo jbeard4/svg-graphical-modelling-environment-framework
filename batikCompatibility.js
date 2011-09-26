@@ -1,3 +1,7 @@
+/**
+* Copyright (C) 2011 Jacob Beard
+* Released under GNU GPL, read the file 'COPYING' for more information
+**/
 if(typeof location === "undefined"){
 	location = "file:///"	//FIXME: expose necessary API in batik to get URI from the navigation bar
 }
