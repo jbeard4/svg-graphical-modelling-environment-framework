@@ -11,8 +11,8 @@ Released under GNU GPL, read the file 'COPYING' for more information
 	<script>
 		function computeTDelta(oldEvent,newEvent){
 			//summary:computes the offset between two events; to be later used with this.translate
-			var dx = newEvent.clientX - oldEvent.clientX;
-			var dy = newEvent.clientY - oldEvent.clientY;
+			let dx = newEvent.clientX - oldEvent.clientX;
+			let dy = newEvent.clientY - oldEvent.clientY;
 
 			return {'dx':dx,'dy':dy};
 		}
@@ -112,7 +112,7 @@ Released under GNU GPL, read the file 'COPYING' for more information
 					selectedIcons.slice().forEach(function(icon){icon.deselect(selectedIcons)});
 
 					//select new icons
-					var elementsToSelect = modules.env.canvas.getEnclosureList2(marquee.getBBox(),".selectable");
+					let elementsToSelect = modules.env.canvas.getEnclosureList2(marquee.getBBox(),".selectable");
 					elementsToSelect.forEach(function(element){
 						element.select(selectedIcons);
 					});
@@ -199,7 +199,7 @@ Released under GNU GPL, read the file 'COPYING' for more information
 
 		<transition event="mouseup" target="idle">
 			<script>
-				var newText = prompt("Enter new text value:",textBeingEdited.textContent);
+				let newText = prompt("Enter new text value:",textBeingEdited.textContent);
 				if(newText &amp;&amp; newText.length){
 					textBeingEdited.textContent = newText;
 				}
@@ -436,7 +436,7 @@ Released under GNU GPL, read the file 'COPYING' for more information
 			<assign location="firstEvent" expr="_event.data.domEvent"/>
 			<assign location="eventStamp" expr="_event.data.domEvent"/>
 			<script>
-				var bbox = modules.svgHelper.getAggregateBBoxInCanvasSpace(selectedIcons);
+				let bbox = modules.svgHelper.getAggregateBBoxInCanvasSpace(selectedIcons);
 				console.log(bbox);
 
 				draggingRect = 	modules.env.svg.rect(bbox.x,bbox.y,bbox.width,bbox.height);

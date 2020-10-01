@@ -1,36 +1,46 @@
 /**
-* Copyright (C) 2011 Jacob Beard
-* Released under GNU GPL, read the file 'COPYING' for more information
-**/
-define(
-	["helpers","behaviour/constructors/control-point-draggable"],
-	function(helpers,setupControlPointDragBehaviour){
+ * Copyright (C) 2011 Jacob Beard
+ * Released under GNU GPL, read the file 'COPYING' for more information
+ **/
+define(['helpers', 'behaviour/constructors/control-point-draggable'], function (
+	helpers,
+	setupControlPointDragBehaviour
+) {
+	return function (
+		env,
+		segment,
+		propNum,
+		associatedEndPoint,
+		associatedControlPoint
+	) {
+		let g = env.svg.group(env.controlLayer);
 
-		return function(env,segment,propNum,associatedEndPoint,associatedControlPoint){
+		$(g).addClass('control-point-icon');
 
-			var g = env.svg.group(env.controlLayer);
+		let propStr = helpers.propNumtoPropString(propNum);
 
-			$(g).addClass("control-point-icon");
+		let l = env.svg.line(
+			g,
+			segment[propStr.x],
+			segment[propStr.y],
+			associatedEndPoint.segment.x,
+			associatedEndPoint.segment.y,
+			{ fill: 'none', stroke: 'blue' }
+		);
+		let c = env.svg.circle(g, segment[propStr.x], segment[propStr.y], 5, {
+			fill: 'yellow',
+			stroke: 'black',
+		});
 
-			var propStr = helpers.propNumtoPropString(propNum);
+		setupControlPointDragBehaviour.call(g, env, {
+			segment: segment,
+			point: c,
+			line: l,
+			propStr: propStr,
+			associatedEndPoint: associatedEndPoint,
+			associatedControlPoint: associatedControlPoint,
+		});
 
-			var l = env.svg.line(g,
-				segment[propStr.x],
-				segment[propStr.y],
-				associatedEndPoint.segment.x,
-				associatedEndPoint.segment.y,
-				{fill:"none",stroke:"blue"});
-			var c = env.svg.circle(g,segment[propStr.x],segment[propStr.y],5,{fill:"yellow",stroke:"black"});
-			
-			setupControlPointDragBehaviour.call(g,env,{ segment:segment,
-									point : c,
-									line : l,
-									propStr:propStr,	
-									associatedEndPoint:associatedEndPoint,
-									associatedControlPoint:associatedControlPoint});
-
-			return g;
-			
-		};
-	}
-);
+		return g;
+	};
+});
